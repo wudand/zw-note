@@ -1,37 +1,18 @@
-# 知识笔记
+# 知识笔记软件需求大纲
 
-#### 介绍
+## 一、项目概述
 本项目为个人使用的知识笔记记录软件，旨在为用户提供便捷的文档管理、编辑及预览功能，帮助用户高效整理和查阅个人知识内容。
 
-#### 软件架构
-软件架构说明
+## 二、核心功能模块
+### 1. 文档管理
+- 展示所有文档列表，支持查看与快速定位
+- 编辑单个文档的基础信息（如标题、描述、标签等）
 
+### 2. 文档编辑页面
+- 从文档列表点击进入指定文档的编辑界面
+- 左侧显示文档目录结构，辅助定位各章节
+- 右侧提供富文本编辑器，用于编写和修改文档内容
 
-#### 安装教程
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 使用说明
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+### 3. 文档全文预览页面
+- 以全屏方式呈现富文本编辑器保存的文档内容
+- 仅提供阅读体验，不包含任何编辑操作
