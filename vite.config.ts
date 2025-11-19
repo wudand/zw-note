@@ -14,5 +14,12 @@ export default defineConfig({
     port: 5555,
     host: '0.0.0.0',
     open: false,
+    proxy: {
+      '/api': {
+        target: 'http://192.168.1.100:55559',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   }
 })

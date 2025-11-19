@@ -42,7 +42,7 @@
 
           <div class="document-item__actions" @click.stop>
             <el-button type="success" size="default" @click="handleEdit(document)">编辑</el-button>
-            <el-dropdown @command="handleDropdownCommand">
+            <el-dropdown @command="handleDropdownCommand" trigger="click">
               <el-icon class="document-item__actions-icon" size="20" color="#666">
                 <MoreFilled />
               </el-icon>
@@ -50,6 +50,7 @@
                 <el-dropdown-menu>
                   <el-dropdown-item :command="{ action: 'preview', document }">查看</el-dropdown-item>
                   <el-dropdown-item :command="{ action: 'settings', document }">设置</el-dropdown-item>
+                  <el-dropdown-item class="document-item__actions-delete" :command="{ action: 'delete', document }">删除</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -59,14 +60,15 @@
     </div>
 
     <!-- 创建新文档弹窗 -->
-    <AddFile ref="addFileRef" @confirm="handleCreateConfirm" />
+    <AddFile ref="addFileRef" @refresh="getDocumentListData" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, defineAsyncComponent } from 'vue'
+import { reactive, ref, defineAsyncComponent, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { MoreFilled } from '@element-plus/icons-vue'
+import { getDocumentList, createDocument } from '@/service/api/documentList'
 
 const AddFile = defineAsyncComponent(() => import('./components/AddFile.vue'))
 
@@ -80,77 +82,49 @@ interface DocumentItem {
 const router = useRouter()
 const addFileRef = ref()
 
-const documents = reactive<DocumentItem[]>([
-  {
-    id: '1',
-    title: '前端笔记',
-    description: '每天进步一点。日积月累。',
-    author: 'DODOROWO'
-  },
-  {
-    id: '2',
-    title: '后端技术简析',
-    description: '技术的瓶颈,绝不是具体的语言,框架,API接口,这些东西。',
-    author: '吴烦恼'
-  },
-  {
-    id: '2',
-    title: '后端技术简析',
-    description: '技术的瓶颈,绝不是具体的语言,框架,API接口,这些东西。',
-    author: '吴烦恼'
-  },
-  {
-    id: '2',
-    title: '后端技术简析',
-    description: '技术的瓶颈,绝不是具体的语言,框架,API接口,这些东西。',
-    author: '吴烦恼'
-  },
-  {
-    id: '2',
-    title: '后端技术简析',
-    description: '技术的瓶颈,绝不是具体的语言,框架,API接口,这些东西。',
-    author: '吴烦恼'
-  },
-  {
-    id: '2',
-    title: '后端技术简析',
-    description: '技术的瓶颈,绝不是具体的语言,框架,API接口,这些东西。',
-    author: '吴烦恼'
-  },
-  {
-    id: '2',
-    title: '后端技术简析',
-    description: '技术的瓶颈,绝不是具体的语言,框架,API接口,这些东西。',
-    author: '吴烦恼'
-  }
-])
+const documents = ref<DocumentItem[]>([])
 
 interface DropdownPayload {
-  action: 'edit' | 'preview' | 'settings'
+  action: 'edit' | 'preview' | 'settings' | 'delete'
   document: DocumentItem
 }
 
-function handleCreate() {
-  addFileRef.value?.open()
+onMounted(() => {
+  getDocumentListData()
+})
+
+// 获取文档列表数据
+const getDocumentListData = async () => {
+  try {
+    const res = await getDocumentList()
+    documents.value = res.data.list as DocumentItem[]
+    console.log(documents.value)
+  } catch (error) {
+    console.error('获取文档列表失败', error)
+  }
 }
 
-function handleCreateConfirm(data: { title: string; author: string; description: string }) {
-  console.info('创建新文档:', data)
-  
-  // 创建新文档
-  const newDocument: DocumentItem = {
-    id: `doc-${Date.now()}`,
-    title: data.title,
-    author: data.author,
-    description: data.description,
-  }
-  
-  documents.push(newDocument)
-  
-  // TODO: 调用 API 保存文档
-  // 创建成功后跳转到编辑页面
-  router.push({ name: 'document-edit', params: { id: newDocument.id } })
+// 创建文档
+function handleCreate() {
+  addFileRef.value?.open('create')
 }
+
+// async function handleCreateConfirm(data: { title: string; author: string; description: string }) {
+//   const res = await createDocument(data)
+    
+//   // 创建新文档
+//   const newDocument: DocumentItem = {
+//     id: res.data.id,
+//     title: res.data.title,
+//     author: res.data.author,
+//     description: res.data.description,
+//   }
+  
+//   documents.value.push(newDocument)
+  
+//   // 创建成功后跳转到编辑页面
+//   router.push({ name: 'document-edit', params: { id: newDocument.id } })
+// }
 
 function handlePreview(document: DocumentItem) {
   router.push({ name: 'document-preview', params: { id: document.id } })
@@ -167,6 +141,10 @@ function handleDropdownCommand(payload: DropdownPayload) {
     handlePreview(document)
   } else if (action === 'settings') {
     console.info(`设置操作：${document.title}`)
+    addFileRef.value?.open('edit', document)
+  } else if (action === 'delete') {
+    console.info(`删除操作：${document.title}`)
+    // deleteDocument(document.id)
   }
 }
 </script>
@@ -379,6 +357,7 @@ function handleDropdownCommand(payload: DropdownPayload) {
       margin-top: 6px;
       margin-left: 6px;
     }
+
   }
 }
 
@@ -444,6 +423,16 @@ function handleDropdownCommand(payload: DropdownPayload) {
       justify-content: flex-end;
     }
   }
+}
+
+:deep(.document-item__actions-delete) {
+  color: #f56c6c;
+}
+
+:deep(.document-item__actions-delete:hover) {
+  background-color: #fbdddd;
+  color: #f56c6c;
+  font-weight: bold;
 }
 </style>
 

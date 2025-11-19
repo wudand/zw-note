@@ -11,7 +11,7 @@
       :model="formData"
       :rules="rules"
       label-width="80px"
-      label-position="left"
+      label-position="top"
     >
       <el-form-item label="文档名称" prop="title">
         <el-input
@@ -60,16 +60,20 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import { createDocument, updateDocument } from '@/service/api/documentList'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 interface DocumentFormData {
+  id?: string
   title: string
   author: string
   description: string
 }
 
 interface Emits {
-  (e: 'confirm', data: DocumentFormData): void
-  (e: 'cancel'): void
+  (e: 'refresh'): void
 }
 
 const emit = defineEmits<Emits>()
@@ -79,6 +83,7 @@ const formRef = ref<FormInstance>()
 const submitting = ref(false)
 
 const formData = reactive<DocumentFormData>({
+  id: '',
   title: '',
   author: '',
   description: '',
@@ -99,20 +104,27 @@ const rules: FormRules<DocumentFormData> = {
 }
 
 // 打开弹窗
-function open() {
+function open(type: 'create' | 'edit' = 'create', data?: DocumentFormData) {
+  if (type === 'edit') {
+    formData.id = data?.id
+    formData.title = data?.title || ''
+    formData.author = data?.author || ''
+    formData.description = data?.description || ''
+  } else {
+    resetForm()
+  }
   dialogVisible.value = true
-  resetForm()
 }
 
 // 关闭弹窗
 function handleClose() {
   dialogVisible.value = false
   resetForm()
-  emit('cancel')
 }
 
 // 重置表单
 function resetForm() {
+  formData.id = ''
   formData.title = ''
   formData.author = ''
   formData.description = ''
@@ -122,19 +134,24 @@ function resetForm() {
 // 提交表单
 async function handleSubmit() {
   if (!formRef.value) return
+  submitting.value = true
 
   try {
     await formRef.value.validate()
-    submitting.value = true
-    
-    // 模拟提交延迟
-    setTimeout(() => {
-      emit('confirm', { ...formData })
-      submitting.value = false
-      handleClose()
-    }, 300)
+
+    const api = formData.id ? updateDocument : createDocument
+
+    const res = await api(formData)
+    console.log("res", res)
+    if (!formData.id) {
+      router.push({ name: 'document-edit', params: { id: formData.id } })
+    }
+    emit('refresh')
+    handleClose()
   } catch (error) {
     console.log('表单验证失败', error)
+  } finally {
+    submitting.value = false
   }
 }
 
