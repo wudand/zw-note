@@ -12,7 +12,7 @@ const router = createRouter({
       }
     },
     {
-      path: '/documents/:id/edit',
+      path: '/documents/:id?/edit',
       name: 'document-edit',
       component: () => import('@/views/DocumentEdit/index.vue'),
       meta: {
@@ -20,7 +20,7 @@ const router = createRouter({
       }
     },
     {
-      path: '/documents/:id/preview',
+      path: '/documents/:id?/preview',
       name: 'document-preview',
       component: () => import('@/views/DocumentPreview/index.vue'),
       meta: {

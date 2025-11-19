@@ -17,9 +17,18 @@
         >
           <div class="document-item__thumbnail">
             <div class="document-item__thumbnail-box">
-              <span class="document-item__thumbnail-title">{{ document.title }}</span>
+              <div class="document-item__thumbnail-header">
+                <div class="document-item__thumbnail-line"></div>
+                <div class="document-item__thumbnail-line document-item__thumbnail-line--short"></div>
+              </div>
+              <div class="document-item__thumbnail-content">
+                <span class="document-item__thumbnail-title">{{ document.title }}</span>
+                <div class="document-item__thumbnail-meta">
+                  <span class="document-item__thumbnail-author">{{ document.author }}</span>
+                </div>
+              </div>
               <div class="document-item__thumbnail-footer">
-                <span class="document-item__thumbnail-author">{{ document.author }}</span>
+                <div class="document-item__thumbnail-corner"></div>
               </div>
             </div>
           </div>
@@ -32,28 +41,34 @@
           </div>
 
           <div class="document-item__actions" @click.stop>
-            <!-- <el-dropdown split-button type="primary" @click="handleClick" @command="handleDropdownCommand">
-              编辑
+            <el-button type="success" size="default" @click="handleEdit(document)">编辑</el-button>
+            <el-dropdown @command="handleDropdownCommand">
+              <el-icon class="document-item__actions-icon" size="20" color="#666">
+                <MoreFilled />
+              </el-icon>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item :command="{ action: 'edit', document }">编辑</el-dropdown-item>
                   <el-dropdown-item :command="{ action: 'preview', document }">查看</el-dropdown-item>
                   <el-dropdown-item :command="{ action: 'settings', document }">设置</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
-            </el-dropdown> -->
-
-            <el-button type="primary" size="default" @click="handleEdit(document)">编辑</el-button>
+            </el-dropdown>
           </div>
         </article>
       </main>
     </div>
+
+    <!-- 创建新文档弹窗 -->
+    <AddFile ref="addFileRef" @confirm="handleCreateConfirm" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref, defineAsyncComponent } from 'vue'
 import { useRouter } from 'vue-router'
+import { MoreFilled } from '@element-plus/icons-vue'
+
+const AddFile = defineAsyncComponent(() => import('./components/AddFile.vue'))
 
 interface DocumentItem {
   id: string
@@ -63,6 +78,8 @@ interface DocumentItem {
 }
 
 const router = useRouter()
+const addFileRef = ref()
+
 const documents = reactive<DocumentItem[]>([
   {
     id: '1',
@@ -114,8 +131,25 @@ interface DropdownPayload {
 }
 
 function handleCreate() {
-  console.info('创建新文档')
-  // TODO: 实现创建文档逻辑
+  addFileRef.value?.open()
+}
+
+function handleCreateConfirm(data: { title: string; author: string; description: string }) {
+  console.info('创建新文档:', data)
+  
+  // 创建新文档
+  const newDocument: DocumentItem = {
+    id: `doc-${Date.now()}`,
+    title: data.title,
+    author: data.author,
+    description: data.description,
+  }
+  
+  documents.push(newDocument)
+  
+  // TODO: 调用 API 保存文档
+  // 创建成功后跳转到编辑页面
+  router.push({ name: 'document-edit', params: { id: newDocument.id } })
 }
 
 function handlePreview(document: DocumentItem) {
@@ -129,9 +163,7 @@ function handleEdit(document: DocumentItem) {
 function handleDropdownCommand(payload: DropdownPayload) {
   const { action, document } = payload
 
-  if (action === 'edit') {
-    handleEdit(document)
-  } else if (action === 'preview') {
+  if (action === 'preview') {
     handlePreview(document)
   } else if (action === 'settings') {
     console.info(`设置操作：${document.title}`)
@@ -158,8 +190,7 @@ function handleDropdownCommand(payload: DropdownPayload) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
+    padding: 16px 0;
     border-bottom: 1px solid #e9ecef;
   }
 
@@ -197,6 +228,11 @@ function handleDropdownCommand(payload: DropdownPayload) {
     box-shadow: 0 2px 8px rgba(103, 194, 58, 0.1);
   }
 
+  &:hover &__thumbnail-box {
+    border-color: #67c23a;
+    box-shadow: 0 2px 8px rgba(103, 194, 58, 0.1);
+  }
+
   &:last-child {
     margin-bottom: 0;
   }
@@ -206,58 +242,95 @@ function handleDropdownCommand(payload: DropdownPayload) {
   }
 
   &__thumbnail-box {
-    width: 80px;
-    height: 100px;
-    background: linear-gradient(135deg, #67c23a 0%, #529b2e 100%);
-    border-radius: 8px;
+    width: 100px;
+    height: 120px;
+    background: #ffffff;
+    border: 2px solid #e1e4e8;
+    border-radius: 4px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    padding: 10px 8px;
-    box-shadow: 0 2px 6px rgba(103, 194, 58, 0.25);
+    padding: 0;
     position: relative;
     overflow: hidden;
+    transition: all 0.2s ease;
 
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
-      pointer-events: none;
+    // &:hover {
+    //   border-color: #67c23a;
+    //   box-shadow: 0 2px 8px rgba(3, 102, 214, 0.1);
+    // }
+  }
+
+  &__thumbnail-header {
+    padding: 8px 10px 6px;
+    border-bottom: 1px solid #e1e4e8;
+    background: #f6f8fa;
+  }
+
+  &__thumbnail-line {
+    height: 2px;
+    background: #67c23a;
+    margin-bottom: 4px;
+    border-radius: 1px;
+
+    &--short {
+      width: 60%;
+      background: #d1d5db;
     }
   }
 
+  &__thumbnail-content {
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
   &__thumbnail-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    color: #ffffff;
-    line-height: 1.3;
+    color: #24292e;
+    line-height: 1.4;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
-    position: relative;
-    z-index: 1;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: -0.01em;
   }
 
-  &__thumbnail-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  &__thumbnail-meta {
     margin-top: auto;
-    position: relative;
-    z-index: 1;
+    padding-top: 8px;
+    border-top: 1px solid #f1f3f5;
   }
 
   &__thumbnail-author {
     font-size: 9px;
-    color: rgba(255, 255, 255, 0.75);
-    font-weight: 500;
+    color: #6a737d;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__thumbnail-footer {
+    height: 8px;
+    background: #f6f8fa;
+    border-top: 1px solid #e1e4e8;
+    position: relative;
+  }
+
+  &__thumbnail-corner {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 12px 12px;
+    border-color: transparent transparent #67c23a transparent;
   }
 
   &__content {
@@ -300,6 +373,12 @@ function handleDropdownCommand(payload: DropdownPayload) {
   &__actions {
     flex-shrink: 0;
     transition: opacity 0.2s ease;
+    &-icon {
+      cursor: pointer;
+      transform: rotate(90deg);
+      margin-top: 6px;
+      margin-left: 6px;
+    }
   }
 }
 
@@ -326,8 +405,8 @@ function handleDropdownCommand(payload: DropdownPayload) {
     padding: 14px;
 
     &__thumbnail-box {
-      width: 70px;
-      height: 88px;
+      width: 90px;
+      height: 110px;
     }
 
     &__title {
@@ -356,7 +435,7 @@ function handleDropdownCommand(payload: DropdownPayload) {
 
     &__thumbnail-box {
       width: 100%;
-      height: 120px;
+      height: 140px;
     }
 
     &__actions {

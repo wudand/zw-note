@@ -6,6 +6,7 @@
           <!-- <aside class="document-edit__sidebar"> -->
             <DocumentOutline
               v-model="outline"
+              :showEdit="true"
               @item-click="handleOutlineClick"
               @item-change="handleOutlineChange"
             />
@@ -37,6 +38,7 @@ const DocumentOutline = defineAsyncComponent(() => import('@/components/Document
 const route = useRoute()
 
 const content = ref(`
+> 测试测试
 **粗体** 正常 *斜体* ~~删除线~~ \`代码块\`
 ---
 __粗体__ 正常 _斜体_ ~~删除线~~ \`代码块\`
@@ -98,12 +100,24 @@ const outline = ref<OutlineItem[]>([
   {
     id: '1',
     title: '第一章 概述',
-    level: 1,
+    parentId: '0',
+    children: [
+      {
+        id: '1-1',
+        title: '1.1 概述',
+        parentId: '1',
+      },
+      {
+        id: '1-2',
+        title: '1.2 概述',
+        parentId: '1',
+      },
+    ],
   },
   {
     id: '2',
     title: '第二章 详细说明',
-    level: 1,
+    parentId: '0',
   },
 ])
 

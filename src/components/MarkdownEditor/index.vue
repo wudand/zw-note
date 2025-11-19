@@ -280,15 +280,14 @@
             <!-- 保存 -->
             <button
                 type="button"
-                class="toolbar-btn"
+                class="toolbar-btn toolbar-btn--save"
                 @click="save"
                 title="保存"
             >
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                    <path d="M12 2L2 22h20L12 2z"/>
-                    <path d="M12 2L2 22h20L12 2z"/>
-                    <path d="M12 2L2 22h20L12 2z"/>
-                    <path d="M12 2L2 22h20L12 2z"/>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
             </button>
 
@@ -407,7 +406,7 @@ const canUndo = ref(false)
 const canRedo = ref(false)
 
 // 编辑模式
-const mode = ref<'edit' | 'preview' | 'fullscreen'>('edit')
+const mode = ref<'edit' | 'preview' | 'fullscreen'>('preview')
 
 // 切换模式
 function switchMode(newMode: 'edit' | 'preview' | 'fullscreen') {
@@ -1049,7 +1048,7 @@ watch(content, (newVal) => {
   &__editor {
     flex: 1;
     width: 100%;
-    padding: 20px;
+    padding: 10px;
     border: none;
     outline: none;
     resize: none;
@@ -1059,6 +1058,7 @@ watch(content, (newVal) => {
     color: #333;
     background-color: #ffffff;
     overflow-y: auto;
+    box-sizing: border-box;
 
     &::placeholder {
       color: #9ca3af;
@@ -1067,7 +1067,7 @@ watch(content, (newVal) => {
 
   &__preview {
     flex: 1;
-    padding: 20px;
+    padding: 10px;
     overflow-y: auto;
     background-color: #ffffff;
     color: #333;
@@ -1149,10 +1149,10 @@ watch(content, (newVal) => {
     }
 
     :deep(blockquote) {
-      padding: 0 1em;
+      padding: 0 0.5em;
       color: #6a737d;
       border-left: 0.25em solid #dfe2e5;
-      margin-bottom: 16px;
+      margin: 0;
     }
 
     :deep(table) {
@@ -1236,7 +1236,7 @@ watch(content, (newVal) => {
   transition: background-color 0.2s;
 
   &:hover:not(:disabled) {
-    background-color: #ddd;
+    background-color: #c6c6c6;
   }
 
   &:active:not(:disabled) {
@@ -1263,6 +1263,31 @@ watch(content, (newVal) => {
     }
   }
 
+  &--save {
+    background-color: #4caf50;
+    color: #fff;
+    font-weight: 600;
+    margin-right: 16px;
+    
+    &:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+    
+    &:active {
+      background-color: #3d8b40;
+      transform: scale(0.95);
+    }
+    
+    svg {
+      animation: none;
+    }
+    
+    &:hover svg {
+      animation: savePulse 0.6s ease-in-out;
+    }
+  }
+
   svg {
     display: block;
   }
@@ -1273,6 +1298,15 @@ watch(content, (newVal) => {
 
   em {
     font-style: italic;
+  }
+}
+
+@keyframes savePulse {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
   }
 }
 </style>
