@@ -722,7 +722,7 @@ onMounted(() => {
     background-color: #e1e4e8;
     
     &:hover {
-      background-color: #67c23a;
+      background-color: #5a9e58;
     }
   }
 }

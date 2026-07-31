@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "mockjs": "^1.1.0",
+    "openai": "^6.9.1",
     "qs": "^6.14.0",
     "splitpanes": "^4.0.4",
     "vue": "^3.5.24",

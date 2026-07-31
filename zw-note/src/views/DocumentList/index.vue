@@ -2,7 +2,7 @@
   <div class="document-list-page">
     <div class="document-list-page__container">
       <header class="document-list-page__header">
-        <h1 class="document-list-page__title">文档列表</h1>
+        <h1 class="document-list-page__title">WD·笔记</h1>
         <el-button type="success" size="default" @click="handleCreate">
           创建新的文档
         </el-button>
@@ -42,7 +42,7 @@
 
           <div class="document-item__actions" @click.stop>
             <el-button type="success" size="default" @click="handleEdit(document)">编辑</el-button>
-            <el-dropdown @command="handleDropdownCommand" trigger="click">
+            <el-dropdown @command="handleDropdownCommand">
               <el-icon class="document-item__actions-icon" size="20" color="#666">
                 <MoreFilled />
               </el-icon>
@@ -68,7 +68,8 @@
 import { reactive, ref, defineAsyncComponent, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { MoreFilled } from '@element-plus/icons-vue'
-import { getDocumentList, createDocument } from '@/service/api/documentList'
+import { getDocumentList, createDocument, deleteDocument } from '@/service/api/documentList'
+import { ElMessageBox, ElMessage } from 'element-plus'
 
 const AddFile = defineAsyncComponent(() => import('./components/AddFile.vue'))
 
@@ -145,6 +146,23 @@ function handleDropdownCommand(payload: DropdownPayload) {
   } else if (action === 'delete') {
     console.info(`删除操作：${document.title}`)
     // deleteDocument(document.id)
+
+    ElMessageBox.confirm(
+      '确定删除该文档吗？',
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    .then(() => {
+      deleteDocument(document.id)
+      getDocumentListData()
+    })
+    .catch(() => {
+      console.log('删除取消')
+    })
   }
 }
 </script>
@@ -202,12 +220,12 @@ function handleDropdownCommand(payload: DropdownPayload) {
   position: relative;
 
   &:hover {
-    border-color: #67c23a;
+    border-color: #5a9e58;
     box-shadow: 0 2px 8px rgba(103, 194, 58, 0.1);
   }
 
   &:hover &__thumbnail-box {
-    border-color: #67c23a;
+    border-color: #5a9e58;
     box-shadow: 0 2px 8px rgba(103, 194, 58, 0.1);
   }
 
@@ -233,7 +251,7 @@ function handleDropdownCommand(payload: DropdownPayload) {
     transition: all 0.2s ease;
 
     // &:hover {
-    //   border-color: #67c23a;
+    //   border-color: #5a9e58;
     //   box-shadow: 0 2px 8px rgba(3, 102, 214, 0.1);
     // }
   }
@@ -246,7 +264,7 @@ function handleDropdownCommand(payload: DropdownPayload) {
 
   &__thumbnail-line {
     height: 2px;
-    background: #67c23a;
+    background: #5a9e58;
     margin-bottom: 4px;
     border-radius: 1px;
 
@@ -308,7 +326,7 @@ function handleDropdownCommand(payload: DropdownPayload) {
     height: 0;
     border-style: solid;
     border-width: 0 0 12px 12px;
-    border-color: transparent transparent #67c23a transparent;
+    border-color: transparent transparent #5a9e58 transparent;
   }
 
   &__content {

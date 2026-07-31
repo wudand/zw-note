@@ -1,10 +1,19 @@
 :root {
-  --el-color-primary: #5aab32!important;
-  --el-color-primary-light-3: #68ab46;
-  --el-color-primary-light-5: #73aa57;
-  --el-color-primary-light-7: #7faa6a;
-  --el-color-primary-light-8: #8ead7e;
-  --el-color-primary-light-9: #9dad95;
+  --el-color-primary: #5a9e58!important;
+  --el-color-primary-light-3: #7bb379;
+  --el-color-primary-light-5: #96c393;
+  --el-color-primary-light-7: #b1d3ae;
+  --el-color-primary-light-8: #c5dfc3;
+  --el-color-primary-light-9: #daeade;
+
+  /* 柔和成功色，覆盖 Element Plus 默认亮绿 */
+  --el-color-success: #5a9e58!important;
+  --el-color-success-light-3: #7bb379;
+  --el-color-success-light-5: #96c393;
+  --el-color-success-light-7: #b1d3ae;
+  --el-color-success-light-8: #c5dfc3;
+  --el-color-success-light-9: #daeade;
+  --el-color-success-dark-2: #4a8548;
 
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

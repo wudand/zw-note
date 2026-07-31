@@ -26,6 +26,14 @@ const router = createRouter({
       meta: {
         title: '预览文档'
       }
+    },
+    {
+      path: '/openai',
+      name: 'openai',
+      component: () => import('@/views/openAi/index.vue'),
+      meta: {
+        title: 'DeepSeek OpenAI'
+      }
     }
   ]
 })

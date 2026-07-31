@@ -1264,18 +1264,18 @@ watch(content, (newVal) => {
   }
 
   &--save {
-    background-color: #4caf50;
+    background-color: #5a9e58;
     color: #fff;
     font-weight: 600;
     margin-right: 16px;
     
     &:hover {
-      background-color: #45a049;
+      background-color: #4a8548;
       transform: scale(1.05);
     }
     
     &:active {
-      background-color: #3d8b40;
+      background-color: #3d7340;
       transform: scale(0.95);
     }
     

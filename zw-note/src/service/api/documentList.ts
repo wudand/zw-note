@@ -24,7 +24,7 @@ export const createDocument = (data: any) => {
 }
 
 /**
- * 更新文档
+ * 更新文档信息
  * @returns 
  */
 export const updateDocument = (data: any) => {
@@ -32,6 +32,40 @@ export const updateDocument = (data: any) => {
         url: '/document',
         method: 'put',
         data
+    });
+}
+
+/**
+ * 更新文档内容
+ * @returns 
+ */
+export const updateDocumentContent = (data: any) => {
+    return request({
+        url: '/document/content',
+        method: 'put',
+        data
+    });
+}
+
+/**
+ * 获取文档目录
+ * @returns 
+ */
+export const getDocumentOutline = (documentId: string) => {
+    return request({
+        url: `/document/outline/${documentId}`,
+        method: 'get'
+    });
+}
+
+/**
+ * 获取文档目录对应的内容
+ * @returns 
+ */
+export const getDocumentContent = (outlineId: string) => {
+    return request({
+        url: `/document/content/${outlineId}`,
+        method: 'get'
     });
 }
 

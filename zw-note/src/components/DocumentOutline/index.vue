@@ -15,6 +15,7 @@
               type="success"
               size="small"
               :icon="Plus"
+              aria-label="新建目录"
               @click="handleAdd"
             ></el-button>
         </div>
@@ -144,10 +145,7 @@ export interface OutlineItem {
 
 interface Props {
   modelValue: OutlineItem[],
-  showEdit?: {
-    type: boolean,
-    default: false,
-  }
+  showEdit?: boolean
 }
 
 interface Emits {
@@ -157,14 +155,18 @@ interface Emits {
 }
 
 const emit = defineEmits<Emits>()
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  showEdit: false
+})
 
 // 目录数据
 const outline = ref<OutlineItem[]>([...props.modelValue])
 
 // 监听外部数据变化
 watch(() => props.modelValue, (newVal) => {
+  console.log('newVal', newVal)
   outline.value = [...newVal]
+  activeItemId.value = newVal[0]?.id || ''
   // // 构建树形结构
   // buildTree()
 }, { deep: true })
@@ -173,7 +175,7 @@ watch(() => props.modelValue, (newVal) => {
 const expandedItems = ref<Set<string>>(new Set())
 
 // 当前激活的目录ID
-const activeItemId = ref<string>('')
+const activeItemId = ref<string>(props.modelValue[0]?.id || '')
 
 // 右键菜单相关
 const contextMenuVisible = ref(false)
@@ -277,7 +279,7 @@ onMounted(() => {
       expandedItems.value.add(item.id)
     }
   })
-
+  
   if (props.showEdit) {
     document.addEventListener('click', handleClickOutside)
   }
@@ -516,53 +518,63 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-// 目录样式
+// 与系统主色 / 文档列表保持一致的简洁目录
 .outline {
   display: flex;
   flex-direction: column;
   height: 100%;
   background-color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
 
   &__header {
     height: 40px;
     padding: 2px 8px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #e9ecef;
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+
     &_left {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+
       .return-btn {
         width: 28px;
         height: 28px;
-        border: 1px solid #ddd;
-        color: #666;
+        border: 1px solid #e1e4e8;
+        color: #6a737d;
         border-radius: 50%;
         display: flex;
         justify-content: center;
         align-items: center;
+        cursor: pointer;
+        background: transparent;
+        transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+
         &:hover {
           border-color: var(--el-color-primary);
           color: var(--el-color-primary);
+          background-color: var(--el-color-primary-light-9);
         }
-      }      
+      }
     }
   }
 
   &__title {
     margin: 0;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
-    color: #24292e;
+    color: #212529;
+    letter-spacing: -0.01em;
   }
 
   &__content {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 0;
+    padding: 8px 4px;
   }
 
   &__nav {
@@ -580,24 +592,33 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 10px;
+    padding: 7px 10px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     border-left: 3px solid transparent;
-    min-height: 36px;
+    min-height: 34px;
     box-sizing: border-box;
-    
+    border-radius: 4px;
+
     &:hover {
       background-color: #f6f8fa;
+
+      .outline__item-icon {
+        color: var(--el-color-primary);
+      }
     }
 
     &--active {
-      background-color: #f0f9ff;
-      border-left-color: #67c23a;
-      
+      background-color: var(--el-color-primary-light-9);
+      border-left-color: var(--el-color-primary);
+
       .outline__item-text {
-        color: #67c23a;
+        color: var(--el-color-primary);
         font-weight: 600;
+      }
+
+      .outline__item-icon {
+        color: var(--el-color-primary);
       }
     }
 
@@ -613,7 +634,7 @@ onBeforeUnmount(() => {
 
     &--expanded {
       .outline__item-icon {
-        color: #67c23a;
+        color: var(--el-color-primary);
       }
     }
   }
@@ -626,11 +647,11 @@ onBeforeUnmount(() => {
     height: 16px;
     flex-shrink: 0;
     color: #6a737d;
-    transition: transform 0.2s ease, color 0.2s ease;
+    transition: color 0.2s ease;
     cursor: pointer;
 
     &:hover {
-      color: #67c23a;
+      color: var(--el-color-primary);
     }
 
     .el-icon {
@@ -646,30 +667,30 @@ onBeforeUnmount(() => {
 
   &__item-text {
     color: #24292e;
-    font-size: 14px;
+    font-size: inherit;
     line-height: 1.5;
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    transition: color 0.2s ease;
   }
 
   &__children {
     display: flex;
     flex-direction: column;
     background-color: #fafbfc;
+    border-radius: 4px;
+    margin: 2px 0 4px;
   }
 }
 
-// 右键菜单样式
 .context-menu {
   position: fixed;
   z-index: 9999;
   background-color: #ffffff;
   border: 1px solid #e1e4e8;
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 4px 0;
   min-width: 140px;
   overflow: hidden;
@@ -680,7 +701,7 @@ onBeforeUnmount(() => {
     gap: 8px;
     padding: 8px 16px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     color: #24292e;
     transition: background-color 0.2s ease;
 
