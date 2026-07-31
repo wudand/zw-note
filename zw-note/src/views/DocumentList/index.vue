@@ -65,25 +65,20 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, defineAsyncComponent, onMounted } from 'vue'
+import { ref, defineAsyncComponent, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { MoreFilled } from '@element-plus/icons-vue'
-import { getDocumentList, createDocument, deleteDocument } from '@/service/api/documentList'
-import { ElMessageBox, ElMessage } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
+import { useDocumentStore } from '@/store/documentStore'
+import type { DocumentItem } from '@/store/documentStore'
 
 const AddFile = defineAsyncComponent(() => import('./components/AddFile.vue'))
 
-interface DocumentItem {
-  id: string
-  title: string
-  description: string
-  author: string
-}
-
 const router = useRouter()
 const addFileRef = ref()
-
-const documents = ref<DocumentItem[]>([])
+const store = useDocumentStore()
+const { documents } = storeToRefs(store)
 
 interface DropdownPayload {
   action: 'edit' | 'preview' | 'settings' | 'delete'
@@ -94,38 +89,11 @@ onMounted(() => {
   getDocumentListData()
 })
 
-// 获取文档列表数据
-const getDocumentListData = async () => {
-  try {
-    const res = await getDocumentList()
-    documents.value = res.data.list as DocumentItem[]
-    console.log(documents.value)
-  } catch (error) {
-    console.error('获取文档列表失败', error)
-  }
-}
+const getDocumentListData = () => store.fetchDocuments()
 
-// 创建文档
 function handleCreate() {
   addFileRef.value?.open('create')
 }
-
-// async function handleCreateConfirm(data: { title: string; author: string; description: string }) {
-//   const res = await createDocument(data)
-    
-//   // 创建新文档
-//   const newDocument: DocumentItem = {
-//     id: res.data.id,
-//     title: res.data.title,
-//     author: res.data.author,
-//     description: res.data.description,
-//   }
-  
-//   documents.value.push(newDocument)
-  
-//   // 创建成功后跳转到编辑页面
-//   router.push({ name: 'document-edit', params: { id: newDocument.id } })
-// }
 
 function handlePreview(document: DocumentItem) {
   router.push({ name: 'document-preview', params: { id: document.id } })
@@ -141,28 +109,15 @@ function handleDropdownCommand(payload: DropdownPayload) {
   if (action === 'preview') {
     handlePreview(document)
   } else if (action === 'settings') {
-    console.info(`设置操作：${document.title}`)
     addFileRef.value?.open('edit', document)
   } else if (action === 'delete') {
-    console.info(`删除操作：${document.title}`)
-    // deleteDocument(document.id)
-
-    ElMessageBox.confirm(
-      '确定删除该文档吗？',
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
-    .then(() => {
-      deleteDocument(document.id)
-      getDocumentListData()
+    ElMessageBox.confirm('确定删除该文档吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
     })
-    .catch(() => {
-      console.log('删除取消')
-    })
+    .then(() => store.removeDocument(document.id))
+    .catch(() => {})
   }
 }
 </script>

@@ -18,7 +18,7 @@
               <MarkdownEditor
                 v-model="content"
                 placeholder="请输入文档内容..."
-                :height="editorHeight"
+                height="100%"
               />
             </div>
           </main>          
@@ -29,54 +29,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineAsyncComponent } from 'vue'
+import { onMounted, defineAsyncComponent, onBeforeUnmount } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import type { OutlineItem } from '@/components/DocumentOutline/index.vue'
-import { getDocumentOutline, getDocumentContent } from '@/service/api/documentList'
+import { useDocumentStore } from '@/store/documentStore'
 
 const MarkdownEditor = defineAsyncComponent(() => import('@/components/MarkdownEditor/index.vue'))
 const DocumentOutline = defineAsyncComponent(() => import('@/components/DocumentOutline/index.vue'))
+
 const route = useRoute()
+const store = useDocumentStore()
+const { currentOutline: outline, currentContent: content } = storeToRefs(store)
 
-const content = ref(``)
-const outline = ref<OutlineItem[]>([])
-
-const editorHeight = ref('100%')
-
-function handleOutlineClick(item: OutlineItem, index: number) {
-  console.log('点击目录项:', item, index)
-  // TODO: 实现跳转到对应章节的逻辑
-  getDocumentContentData(item.id)
+function handleOutlineClick(item: OutlineItem) {
+  store.fetchContent(item.id)
 }
 
-function handleOutlineChange(items: OutlineItem[]) {
-  console.log('目录变更:', items)
-  // TODO: 实现保存目录结构的逻辑
+function handleOutlineChange(_items: OutlineItem[]) {
+  // TODO: 对接保存目录结构接口
 }
 
-onMounted(() => {
-  const documentId = route.params.id
-  console.log('加载文档:', documentId)
-  // TODO: 根据文档ID加载文档内容
-  getDocumentOutlineData(documentId)
+onMounted(async () => {
+  const documentId = route.params.id as string
+  await store.fetchOutline(documentId)
+  if (outline.value.length > 0 && outline.value[0]) {
+    store.fetchContent(outline.value[0].id)
+  }
 })
 
-const getDocumentOutlineData = async (documentId: string) => {
-  const res = await getDocumentOutline(documentId)
-  console.log('获取文档目录:', res)
-  outline.value = res.data
-  if (outline.value.length > 0) {
-    getDocumentContentData(outline.value[0]?.id)
-  }
-}
-
-const getDocumentContentData = async (outlineId: string) => {
-  const res = await getDocumentContent(outlineId)
-  console.log('获取文档内容:', res)
-  if(res.data) {
-    content.value = res.data
-  }
-}
+onBeforeUnmount(() => {
+  store.resetCurrentDocument()
+})
 </script>
 
 <style scoped lang="scss">
