@@ -1,0 +1,60 @@
+server:
+  host: "0.0.0.0"
+  port: 8888
+  mode: "debug"          # debug | release | test
+  read_timeout: 30       # seconds
+  write_timeout: 30      # seconds
+
+database:
+  driver: "postgres"
+  dsn: "postgres://hsop:P0stgre2022@127.0.0.1:5432/zw-note?sslmode=disable"
+  max_open_conns: 20
+  max_idle_conns: 10
+  conn_max_lifetime: 300 # seconds
+
+jwt:
+  admin_secret:       "change-admin-secret-in-production-min-32-chars"
+  mp_secret:          "change-mp-secret-in-production-min-32-chars"
+  admin_expire_hours: 8    # 管理后台：一个工作日
+  mp_expire_hours:    720  # 小程序：30 天
+
+wechat:
+  apps:
+    miniapp:                              # app_key，由前端请求时携带
+      app_id:     "your_wx_app_id"
+      app_secret: "your_wx_app_secret"
+      name:       "主小程序"
+    # 可继续追加其他小程序
+    # miniapp2:
+    #   app_id:     "another_app_id"
+    #   app_secret: "another_app_secret"
+    #   name:       "第二个小程序"
+
+log:
+  level: "info"          # debug | info | warn | error
+  format: "json"         # json | console
+  output: "stdout"       # stdout | file
+  file_path: "logs/app.log"
+
+upload:
+  dir:         "./uploads"   # local storage directory
+  max_size_mb: 5             # max image size in MB
+
+redemption:
+  cooldown_days: 30   # 用户使用兑换码冷却期（天）
+
+cors:
+  allow_origins:
+    - "*"
+  allow_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "PATCH"
+    - "DELETE"
+    - "OPTIONS"
+  allow_headers:
+    - "Origin"
+    - "Content-Type"
+    - "Authorization"
+  max_age: 86400

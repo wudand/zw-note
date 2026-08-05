@@ -1,0 +1,40 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test artifacts
+*.test
+*.out
+coverage.html
+coverage.txt
+
+# Log files
+logs/
+*.log
+
+# Environment / secrets – never commit these
+.env
+.env.*
+configs/config.local.yaml
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Go workspace
+vendor/
+
+# Swagger generated docs (run make swagger to regenerate)
+docs/
+
+# Cursor / uploads
+.cursor/
+uploads/

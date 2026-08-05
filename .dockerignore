@@ -1,0 +1,20 @@
+# 生效于 docker compose 构建（context = 仓库根目录）
+.git
+**/.DS_Store
+**/.cursor
+**/.vscode
+**/.idea
+
+# 前端
+zw-note/node_modules
+zw-note/dist
+zw-note/.env
+zw-note/.env.*
+zw-note/*.log
+zw-note/README.md
+zw-note/README.en.md
+
+# 后端
+zw-note-backend/bin
+zw-note-backend/**/*.md
+zw-note-backend/docs

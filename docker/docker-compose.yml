@@ -1,0 +1,56 @@
+# 在仓库根目录 notes/ 下执行，或指定本文件：
+#   docker compose -f docker/docker-compose.yml up -d --build
+#
+# 默认连接本机已有 PostgreSQL（见 zw-note-backend/configs/config.yaml）。
+# 临时起独立库：
+#   docker compose -f docker/docker-compose.yml --profile local-db up -d
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend/Dockerfile
+    container_name: zw-note-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # host.docker.internal 便于容器访问宿主机上的 Postgres
+      APP_DATABASE_DSN: "postgres://hsop:P0stgre2022@host.docker.internal:5432/zw-note?sslmode=disable"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend/Dockerfile
+    container_name: zw-note-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  postgres:
+    profiles: ["local-db"]
+    image: postgres:16-alpine
+    container_name: zw-note-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: hsop
+      POSTGRES_PASSWORD: P0stgre2022
+      POSTGRES_DB: zw-note
+    volumes:
+      - ../zw-note-backend/scripts/migrations:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hsop -d zw-note"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  pgdata:
