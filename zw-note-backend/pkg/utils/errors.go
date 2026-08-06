@@ -62,6 +62,13 @@ var (
 	ErrRedemptionCodeProductAlreadySelected = &AppError{Code: CodeRedemptionCodeProductAlreadySelected, Message: "product already selected for this redemption code"}
 )
 
+// Document error codes (5xxxx range)
+var (
+	ErrDocumentNotFound     = &AppError{Code: CodeDocumentNotFound, Message: "document not found"}
+	ErrOutlineNotFound      = &AppError{Code: CodeOutlineNotFound, Message: "outline not found"}
+	ErrOutlineInvalidParent = &AppError{Code: CodeOutlineInvalidParent, Message: "invalid outline parent"}
+)
+
 // NewAppError creates an AppError with the given code and message.
 func NewAppError(code int, message string) *AppError {
 	return &AppError{Code: code, Message: message}

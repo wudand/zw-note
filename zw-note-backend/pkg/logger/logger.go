@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"go-web-api/internal/config"
+	"zw-note-backend/internal/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"go-web-api/internal/dto"
-	"go-web-api/internal/model"
-	"go-web-api/internal/repository"
-	"go-web-api/pkg/database"
-	"go-web-api/pkg/utils"
+	"zw-note-backend/internal/dto"
+	"zw-note-backend/internal/model"
+	"zw-note-backend/internal/repository"
+	"zw-note-backend/pkg/database"
+	"zw-note-backend/pkg/utils"
 
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"

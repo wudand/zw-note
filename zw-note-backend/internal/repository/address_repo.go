@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"go-web-api/internal/model"
+	"zw-note-backend/internal/model"
 
 	"github.com/jmoiron/sqlx"
 )

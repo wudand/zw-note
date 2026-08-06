@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"go-web-api/internal/config"
-	"go-web-api/pkg/utils"
+	"zw-note-backend/internal/config"
+	"zw-note-backend/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

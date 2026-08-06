@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go-web-api/pkg/types"
+	"zw-note-backend/pkg/types"
 )
 
 // Product maps to the `products` table.

@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"go-web-api/internal/dto"
-	"go-web-api/internal/model"
-	"go-web-api/internal/repository"
-	"go-web-api/pkg/utils"
+	"zw-note-backend/internal/dto"
+	"zw-note-backend/internal/model"
+	"zw-note-backend/internal/repository"
+	"zw-note-backend/pkg/utils"
 
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
-//go:generate mockgen -destination=mock/admin_user_service_mock.go -package=mock go-web-api/internal/service AdminUserService
+//go:generate mockgen -destination=mock/admin_user_service_mock.go -package=mock zw-note-backend/internal/service AdminUserService
 
 // AdminUserService defines business logic for management-console user operations.
 type AdminUserService interface {

@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 
-	"go-web-api/internal/dto"
-	"go-web-api/internal/model"
-	"go-web-api/internal/repository"
-	"go-web-api/pkg/types"
-	"go-web-api/pkg/utils"
+	"zw-note-backend/internal/dto"
+	"zw-note-backend/internal/model"
+	"zw-note-backend/internal/repository"
+	"zw-note-backend/pkg/types"
+	"zw-note-backend/pkg/utils"
 
 	"go.uber.org/zap"
 )

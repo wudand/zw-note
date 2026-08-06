@@ -1,7 +1,7 @@
 # ============================================================
 # Variables
 # ============================================================
-APP_NAME   := go-web-api
+APP_NAME   := zw-note-backend
 BUILD_DIR  := bin
 MAIN       := ./cmd/server/main.go
 VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")

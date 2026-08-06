@@ -6,12 +6,12 @@ import (
 	"errors"
 	"fmt"
 
-	"go-web-api/internal/model"
+	"zw-note-backend/internal/model"
 
 	"github.com/jmoiron/sqlx"
 )
 
-//go:generate mockgen -destination=mock/admin_user_repo_mock.go -package=mock go-web-api/internal/repository AdminUserRepository
+//go:generate mockgen -destination=mock/admin_user_repo_mock.go -package=mock zw-note-backend/internal/repository AdminUserRepository
 
 // AdminUserRepository defines the data-access contract for the admin_users table.
 type AdminUserRepository interface {

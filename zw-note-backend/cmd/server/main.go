@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"go-web-api/bootstrap"
-	"go-web-api/internal/config"
+	"zw-note-backend/bootstrap"
+	"zw-note-backend/internal/config"
 
 	"github.com/spf13/cobra"
 )
@@ -13,10 +13,10 @@ import (
 // Version is injected at build time via -ldflags.
 var Version = "dev"
 
-// @title           go-web-api
+// @title           zw-note-backend
 // @version         1.0
 // @description     RESTful API for PC admin and WeChat mini-program
-// @host            localhost:80
+// @host            localhost:8004
 // @BasePath        /
 // @schemes         http
 func main() {
@@ -30,9 +30,9 @@ func newRootCmd() *cobra.Command {
 	var cfgFile string
 
 	root := &cobra.Command{
-		Use:   "go-web-api",
+		Use:   "zw-note-backend",
 		Short: "A production-ready RESTful API server",
-		Long: `go-web-api is a RESTful API server built with Go and Gin.
+		Long: `zw-note-backend is a RESTful API server built with Go and Gin.
 It supports JWT authentication, Prometheus metrics, structured logging,
 and a clean layered architecture.`,
 		SilenceUsage: true,
@@ -71,7 +71,7 @@ func newVersionCmd() *cobra.Command {
 		Use:   "version",
 		Short: "Print the application version",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("go-web-api %s\n", Version)
+			fmt.Printf("zw-note-backend %s\n", Version)
 		},
 	}
 }

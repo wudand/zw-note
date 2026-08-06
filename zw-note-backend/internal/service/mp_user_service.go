@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"go-web-api/internal/config"
-	"go-web-api/internal/model"
-	"go-web-api/internal/repository"
-	"go-web-api/pkg/utils"
+	"zw-note-backend/internal/config"
+	"zw-note-backend/internal/model"
+	"zw-note-backend/internal/repository"
+	"zw-note-backend/pkg/utils"
 
 	"go.uber.org/zap"
 )
 
-//go:generate mockgen -destination=mock/mp_user_service_mock.go -package=mock go-web-api/internal/service MPUserService
+//go:generate mockgen -destination=mock/mp_user_service_mock.go -package=mock zw-note-backend/internal/service MPUserService
 
 // MPUserService defines business logic for WeChat mini-program user operations.
 type MPUserService interface {

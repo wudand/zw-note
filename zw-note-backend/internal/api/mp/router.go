@@ -1,8 +1,8 @@
 package mp
 
 import (
-	"go-web-api/internal/config"
-	"go-web-api/internal/middleware"
+	"zw-note-backend/internal/config"
+	"zw-note-backend/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )

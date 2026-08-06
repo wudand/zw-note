@@ -35,7 +35,7 @@ func GenerateAdminToken(userID uint64, username, role, secret string, expireHour
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expireAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "go-web-api:admin",
+			Issuer:    "zw-note-backend:admin",
 		},
 	}
 	return signToken(claims, secret, expireAt.Unix())
@@ -51,7 +51,7 @@ func GenerateMPToken(userID uint64, openID, appID, secret string, expireHours in
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expireAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "go-web-api:mp",
+			Issuer:    "zw-note-backend:mp",
 		},
 	}
 	return signToken(claims, secret, expireAt.Unix())

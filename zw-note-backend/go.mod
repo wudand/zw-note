@@ -1,4 +1,4 @@
-module go-web-api
+module zw-note-backend
 
 go 1.25.0
 

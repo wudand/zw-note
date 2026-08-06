@@ -64,6 +64,11 @@ const (
 	CodeRedemptionCodeCooldown           = 40013
 	CodeRedemptionCodeNotYours           = 40014
 	CodeRedemptionCodeProductAlreadySelected = 40015
+
+	// Document (notes)
+	CodeDocumentNotFound     = 50001
+	CodeOutlineNotFound      = 50002
+	CodeOutlineInvalidParent = 50003 // 移动节点成环 / 跨文档挂载
 )
 
 func Success(c *gin.Context, data interface{}) {
@@ -111,7 +116,7 @@ func HandleAppError(c *gin.Context, err error) bool {
 		httpStatus = http.StatusUnauthorized
 	case CodeForbidden:
 		httpStatus = http.StatusForbidden
-	case CodeUserNotFound, CodeMPUserNotFound, CodeCategoryNotFound, CodeProductNotFound, CodeAddressNotFound, CodeCouponNotFound, CodeUserCouponNotFound, CodeCarouselNotFound, CodeRedemptionCodeNotFound, CodeRedemptionCodeNotYours, CodeNotFound:
+	case CodeUserNotFound, CodeMPUserNotFound, CodeCategoryNotFound, CodeProductNotFound, CodeAddressNotFound, CodeCouponNotFound, CodeUserCouponNotFound, CodeCarouselNotFound, CodeRedemptionCodeNotFound, CodeRedemptionCodeNotYours, CodeDocumentNotFound, CodeOutlineNotFound, CodeNotFound:
 		httpStatus = http.StatusNotFound
 	}
 

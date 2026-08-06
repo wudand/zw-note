@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"go-web-api/internal/config"
-	"go-web-api/pkg/utils"
+	"zw-note-backend/internal/config"
+	"zw-note-backend/pkg/utils"
 )
 
 const wxCode2SessionURL = "https://api.weixin.qq.com/sns/jscode2session"

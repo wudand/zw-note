@@ -1,4 +1,4 @@
-# go-web-api
+# zw-note-backend
 
 A production-ready RESTful API framework built with Go, following Go idioms: simplicity, explicitness, composition, and concurrency.
 
@@ -19,7 +19,7 @@ A production-ready RESTful API framework built with Go, following Go idioms: sim
 ## Project Layout
 
 ```
-go-web-api/
+zw-note-backend/
 ├── cmd/server/main.go          # Entry point (Cobra CLI)
 ├── bootstrap/                  # App wiring & router setup
 ├── internal/
@@ -107,7 +107,7 @@ make pg-shell             # 进入 psql
 Docker 相关文件统一放在仓库根目录 `docker/`（见 `docker/README.md`）。
 
 ```bash
-make build                # native binary → bin/go-web-api
+make build                # native binary → bin/zw-note-backend
 make docker-build         # 构建后端镜像
 make docker-run           # 启动后端容器 :8080
 ```
@@ -169,7 +169,7 @@ Error codes: `0` = success, `1xxxx` = generic, `2xxxx` = admin, `3xxxx` = mini-p
 ### Example: Admin login
 
 ```bash
-curl -X POST http://localhost:8888/api/admin/v1/auth/login \
+curl -X POST http://localhost:8004/api/admin/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"superadmin","password":"Admin@123456"}'
 ```
@@ -180,7 +180,7 @@ All keys can be overridden with `APP_<KEY>` env vars (dots → underscores), e.g
 
 | Key                        | Default  | Description                      |
 |----------------------------|----------|----------------------------------|
-| `server.port`              | `8888`   | Listening port                   |
+| `server.port`              | `8004`   | Listening port                   |
 | `server.mode`              | `debug`  | `debug` / `release` / `test`     |
 | `server.read_timeout`      | `30`     | HTTP read timeout (seconds)      |
 | `server.write_timeout`     | `30`     | HTTP write timeout (seconds)     |

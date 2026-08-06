@@ -6,12 +6,12 @@ import (
 	"errors"
 	"fmt"
 
-	"go-web-api/internal/model"
+	"zw-note-backend/internal/model"
 
 	"github.com/jmoiron/sqlx"
 )
 
-//go:generate mockgen -destination=mock/mp_user_repo_mock.go -package=mock go-web-api/internal/repository MPUserRepository
+//go:generate mockgen -destination=mock/mp_user_repo_mock.go -package=mock zw-note-backend/internal/repository MPUserRepository
 
 // MPUserRepository defines the data-access contract for the mp_users table.
 type MPUserRepository interface {

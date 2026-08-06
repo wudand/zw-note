@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"go-web-api/internal/config"
+	"zw-note-backend/internal/config"
 )
 
 // CORS returns a middleware that sets Access-Control-* headers based on cfg.

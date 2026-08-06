@@ -5,13 +5,14 @@ import (
 	"path/filepath"
 	"time"
 
-	adminAPI "go-web-api/internal/api/admin"
-	mpAPI "go-web-api/internal/api/mp"
-	"go-web-api/internal/config"
-	"go-web-api/internal/middleware"
-	"go-web-api/internal/repository"
-	"go-web-api/internal/service"
-	"go-web-api/pkg/database"
+	adminAPI "zw-note-backend/internal/api/admin"
+	mpAPI "zw-note-backend/internal/api/mp"
+	notesAPI "zw-note-backend/internal/api/notes"
+	"zw-note-backend/internal/config"
+	"zw-note-backend/internal/middleware"
+	"zw-note-backend/internal/repository"
+	"zw-note-backend/internal/service"
+	"zw-note-backend/pkg/database"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -20,7 +21,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 
-	_ "go-web-api/docs"
+	_ "zw-note-backend/docs"
 )
 
 // SetupRouter builds the gin engine with all global middleware, observability
@@ -104,6 +105,20 @@ func SetupRouter(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine {
 	mpRedemptionCodeHandler := mpAPI.NewRedemptionCodeHandler(redemptionCodeSvc, log)
 
 	mpAPI.RegisterRoutes(r, mpAuthHandler, mpCategoryHandler, mpProductHandler, mpAddressHandler, mpCouponHandler, mpCarouselHandler, mpRedemptionCodeHandler, cfg.JWT)
+
+	// ── Notes API ─────────────────────────────────────────────────────────────
+	documentRepo := repository.NewDocumentRepository(db)
+	outlineRepo := repository.NewOutlineRepository(db)
+	outlineContentRepo := repository.NewOutlineContentRepository(db)
+
+	documentSvc := service.NewDocumentService(txMgr, documentRepo, outlineRepo, outlineContentRepo, log)
+	outlineSvc := service.NewOutlineService(txMgr, outlineRepo, outlineContentRepo, documentRepo, log)
+
+	documentHandler := notesAPI.NewDocumentHandler(documentSvc, log)
+	outlineHandler := notesAPI.NewOutlineHandler(outlineSvc, log)
+	contentHandler := notesAPI.NewContentHandler(outlineSvc, log)
+
+	notesAPI.RegisterRoutes(r, documentHandler, outlineHandler, contentHandler, cfg.Notes.DefaultUserID)
 
 	return r
 }

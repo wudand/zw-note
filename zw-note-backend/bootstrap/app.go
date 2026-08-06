@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"go-web-api/internal/config"
-	"go-web-api/pkg/database"
-	"go-web-api/pkg/logger"
+	"zw-note-backend/internal/config"
+	"zw-note-backend/pkg/database"
+	"zw-note-backend/pkg/logger"
 	"go.uber.org/zap"
 )
 

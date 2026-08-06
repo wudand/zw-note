@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"go-web-api/pkg/utils"
+	"zw-note-backend/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )

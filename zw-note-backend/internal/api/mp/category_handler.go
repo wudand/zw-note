@@ -1,10 +1,10 @@
 package mp
 
 import (
-	"go-web-api/internal/dto"
-	"go-web-api/internal/model"
-	"go-web-api/internal/service"
-	"go-web-api/pkg/utils"
+	"zw-note-backend/internal/dto"
+	"zw-note-backend/internal/model"
+	"zw-note-backend/internal/service"
+	"zw-note-backend/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

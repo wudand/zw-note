@@ -1,6 +1,6 @@
 server:
   host: "0.0.0.0"
-  port: 8888
+  port: 8004
   mode: "debug"          # debug | release | test
   read_timeout: 30       # seconds
   write_timeout: 30      # seconds
@@ -42,6 +42,9 @@ upload:
 
 redemption:
   cooldown_days: 30   # 用户使用兑换码冷却期（天）
+
+notes:
+  default_user_id: 1   # 对应 seed 的 admin 用户
 
 cors:
   allow_origins:

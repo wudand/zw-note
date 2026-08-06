@@ -16,6 +16,12 @@ type Config struct {
 	Wechat   WechatConfig   `mapstructure:"wechat"`
 	Upload   UploadConfig   `mapstructure:"upload"`
 	Redemption RedemptionConfig `mapstructure:"redemption"`
+	Notes    NotesConfig    `mapstructure:"notes"`
+}
+
+// NotesConfig holds settings for the notes module.
+type NotesConfig struct {
+	DefaultUserID uint64 `mapstructure:"default_user_id"` // MVP 阶段未接登录，所有请求默认归属该用户
 }
 
 // RedemptionConfig holds settings for redemption codes.
