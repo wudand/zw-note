@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="创建新文档"
+    :title="dialogTitle"
     width="500px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -58,12 +58,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { computed, ref, reactive } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
-import { createDocument, updateDocument } from '@/service/api/documentList'
+import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { useDocumentStore } from '@/store/documentStore'
 
 const router = useRouter()
+const store = useDocumentStore()
 
 interface DocumentFormData {
   id?: string
@@ -79,8 +81,11 @@ interface Emits {
 const emit = defineEmits<Emits>()
 
 const dialogVisible = ref(false)
+const mode = ref<'create' | 'edit'>('create')
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
+
+const dialogTitle = computed(() => (mode.value === 'edit' ? '文档设置' : '创建新文档'))
 
 const formData = reactive<DocumentFormData>({
   id: '',
@@ -103,8 +108,9 @@ const rules: FormRules<DocumentFormData> = {
   ],
 }
 
-// 打开弹窗
+/** 打开弹窗：create=新建；edit=列表「设置」修改基础信息 */
 function open(type: 'create' | 'edit' = 'create', data?: DocumentFormData) {
+  mode.value = type
   if (type === 'edit') {
     formData.id = data?.id
     formData.title = data?.title || ''
@@ -116,14 +122,13 @@ function open(type: 'create' | 'edit' = 'create', data?: DocumentFormData) {
   dialogVisible.value = true
 }
 
-// 关闭弹窗
 function handleClose() {
   dialogVisible.value = false
   resetForm()
 }
 
-// 重置表单
 function resetForm() {
+  mode.value = 'create'
   formData.id = ''
   formData.title = ''
   formData.author = ''
@@ -131,31 +136,43 @@ function resetForm() {
   formRef.value?.clearValidate()
 }
 
-// 提交表单
 async function handleSubmit() {
   if (!formRef.value) return
-  submitting.value = true
 
   try {
     await formRef.value.validate()
+  } catch {
+    return
+  }
 
-    const api = formData.id ? updateDocument : createDocument
-
-    const res = await api(formData)
-    console.log("res", res)
-    if (!formData.id) {
-      router.push({ name: 'document-edit', params: { id: formData.id } })
+  submitting.value = true
+  try {
+    const payload = {
+      title: formData.title,
+      author: formData.author,
+      description: formData.description,
     }
-    emit('refresh')
+
+    if (mode.value === 'edit' && formData.id) {
+      // 对应列表页下拉「设置」
+      await store.editDocument({ id: formData.id, ...payload })
+      ElMessage.success('保存成功')
+      emit('refresh')
+      handleClose()
+      return
+    }
+
+    const doc = await store.addDocument(payload)
+    ElMessage.success('创建成功')
     handleClose()
-  } catch (error) {
-    console.log('表单验证失败', error)
+    router.push({ name: 'document-edit', params: { id: doc.id } })
+  } catch (error: any) {
+    ElMessage.error(error?.message || '操作失败，请稍后重试')
   } finally {
     submitting.value = false
   }
 }
 
-// 暴露方法供父组件调用
 defineExpose({
   open,
 })
@@ -182,4 +199,3 @@ defineExpose({
   font-family: inherit;
 }
 </style>
-

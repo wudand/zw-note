@@ -117,8 +117,9 @@ func SetupRouter(cfg *config.Config, db *sqlx.DB, log *zap.Logger) *gin.Engine {
 	documentHandler := notesAPI.NewDocumentHandler(documentSvc, log)
 	outlineHandler := notesAPI.NewOutlineHandler(outlineSvc, log)
 	contentHandler := notesAPI.NewContentHandler(outlineSvc, log)
+	notesUploadHandler := notesAPI.NewUploadHandler(cfg.Upload, log)
 
-	notesAPI.RegisterRoutes(r, documentHandler, outlineHandler, contentHandler, cfg.Notes.DefaultUserID)
+	notesAPI.RegisterRoutes(r, documentHandler, outlineHandler, contentHandler, notesUploadHandler, cfg.Notes.DefaultUserID)
 
 	return r
 }

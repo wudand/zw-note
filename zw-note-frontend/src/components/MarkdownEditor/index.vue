@@ -2,7 +2,7 @@
   <div class="markdown-editor">
     <!-- 工具栏 -->
     <div class="markdown-editor__toolbar">
-        <div class="markdown-editor__toolbar-left">
+        <div class="markdown-editor__toolbar-left" @mousedown.prevent>
             <!-- 撤销/重做组 -->
             <div class="toolbar-group">
                 <button
@@ -277,18 +277,30 @@
             </div>            
         </div>
         <div class="markdown-editor__toolbar-right">
-            <!-- 保存 -->
+            <span
+              v-if="!disabled"
+              class="markdown-editor__save-status"
+              :class="{
+                'is-dirty': dirty && !saving,
+                'is-saving': saving,
+              }"
+            >
+              {{ saving ? '保存中…' : dirty ? '未保存' : '已保存' }}
+            </span>
             <button
                 type="button"
                 class="toolbar-btn toolbar-btn--save"
+                :class="{ 'is-dirty': dirty && !saving }"
+                :disabled="disabled || saving || !dirty"
                 @click="save"
-                title="保存"
+                :title="saveTitle"
             >
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7 10 12 15 17 10"/>
                     <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
+                <span class="toolbar-btn__label">保存</span>
             </button>
 
             <!-- 编辑/编辑和预览/全屏预览 -->
@@ -347,6 +359,13 @@
           :placeholder="placeholder"
           @input="handleInput"
           @keydown="handleKeydown"
+          @select="rememberSelection"
+          @keyup="rememberSelection"
+          @mouseup="rememberSelection"
+          @click="rememberSelection"
+          @paste="handlePasteImage"
+          @drop="handleDropImage"
+          @dragover.prevent
         ></textarea>
       </template>
 
@@ -361,6 +380,13 @@
               :placeholder="placeholder"
               @input="handleInput"
               @keydown="handleKeydown"
+              @select="rememberSelection"
+              @keyup="rememberSelection"
+              @mouseup="rememberSelection"
+              @click="rememberSelection"
+              @paste="handlePasteImage"
+              @drop="handleDropImage"
+              @dragover.prevent
             ></textarea>
           </Pane>
           <Pane :size="50" class="markdown-editor__pane">
@@ -374,26 +400,142 @@
         <div class="markdown-editor__preview markdown-editor__preview--fullscreen" v-html="renderedContent"></div>
       </template>
     </div>
+
+    <el-dialog
+      v-model="linkDialogVisible"
+      title="插入链接"
+      width="420px"
+      append-to-body
+      :close-on-click-modal="false"
+      @opened="focusLinkDialogField"
+      @closed="handleLinkDialogClosed"
+    >
+      <el-form
+        ref="linkFormRef"
+        :model="linkForm"
+        :rules="linkRules"
+        label-position="top"
+        @submit.prevent="confirmInsertLink"
+      >
+        <el-form-item label="显示文本" prop="text">
+          <el-input
+            ref="linkTextInputRef"
+            v-model="linkForm.text"
+            placeholder="链接显示的文字（可留空，将使用地址）"
+            clearable
+            maxlength="200"
+            @keyup.enter="confirmInsertLink"
+          />
+        </el-form-item>
+        <el-form-item label="链接地址" prop="url">
+          <el-input
+            ref="linkUrlInputRef"
+            v-model="linkForm.url"
+            placeholder="https://example.com"
+            clearable
+            @keyup.enter="confirmInsertLink"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="linkDialogVisible = false">取消</el-button>
+        <el-button type="success" @click="confirmInsertLink">插入</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="imageDialogVisible"
+      title="插入图片"
+      width="440px"
+      append-to-body
+      :close-on-click-modal="false"
+      @closed="handleImageDialogClosed"
+    >
+      <div class="image-insert">
+        <el-radio-group v-model="imageMode" size="small">
+          <el-radio-button value="upload">上传图片</el-radio-button>
+          <el-radio-button value="url">图片外链</el-radio-button>
+        </el-radio-group>
+
+        <div v-if="imageMode === 'upload'" class="image-insert__upload">
+          <input
+            ref="imageFileInputRef"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            class="image-insert__file-input"
+            @change="handleImageFileChange"
+          />
+          <div class="image-insert__upload-row">
+            <el-button :loading="imageUploading" @click="imageFileInputRef?.click()">
+              {{ imageUploadedUrl ? '重新选择' : '选择本地图片' }}
+            </el-button>
+            <span class="image-insert__hint">支持 jpg / png / webp / gif，最大 5MB</span>
+          </div>
+          <div v-if="imageUploadedUrl" class="image-insert__preview">
+            <img :src="resolveAssetUrl(imageUploadedUrl)" alt="预览" />
+          </div>
+        </div>
+
+        <el-input
+          v-else
+          v-model="imageUrlInput"
+          placeholder="https://example.com/pic.png"
+          clearable
+        />
+
+        <el-input
+          v-model="imageAlt"
+          placeholder="图片描述（可选，用于替代文本）"
+          maxlength="100"
+          clearable
+        />
+      </div>
+      <template #footer>
+        <el-button @click="imageDialogVisible = false">取消</el-button>
+        <el-button
+          type="success"
+          :disabled="!canConfirmImage"
+          :loading="imageUploading"
+          @click="confirmInsertImage"
+        >
+          插入
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, computed } from 'vue'
+import { ref, reactive, watch, nextTick, computed } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules, InputInstance } from 'element-plus'
+import { renderMarkdown, resolveAssetUrl } from '@/utils/markdown'
+import { uploadNoteImage } from '@/service/api/documentList'
 
 interface Props {
   modelValue?: string
   placeholder?: string
   height?: string
+  /** 相对上次保存是否有未保存修改 */
+  dirty?: boolean
+  /** 正在请求保存接口 */
+  saving?: boolean
+  /** 无可用目录节点或加载中时禁用保存 */
+  disabled?: boolean
 }
 
 interface Emits {
   (e: 'update:modelValue', value: string): void
+  (e: 'save'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   placeholder: '请输入内容...',
   height: '500px',
+  dirty: false,
+  saving: false,
+  disabled: false,
 })
 
 const emit = defineEmits<Emits>()
@@ -404,229 +546,70 @@ const history = ref<string[]>([props.modelValue])
 const historyIndex = ref(0)
 const canUndo = ref(false)
 const canRedo = ref(false)
+/** 点击工具栏时 textarea 会失焦，需记住上次光标位置 */
+const savedSelection = ref({ start: 0, end: 0 })
+
+// 插入链接弹窗
+const linkDialogVisible = ref(false)
+const linkFormRef = ref<FormInstance>()
+const linkTextInputRef = ref<InputInstance>()
+const linkUrlInputRef = ref<InputInstance>()
+const linkForm = reactive({
+  text: '',
+  url: '',
+})
+const pendingLinkSelection = ref({ start: 0, end: 0 })
+
+// 插入图片弹窗
+const imageDialogVisible = ref(false)
+const imageMode = ref<'upload' | 'url'>('upload')
+const imageFileInputRef = ref<HTMLInputElement>()
+const imageUploading = ref(false)
+const imageUploadedUrl = ref('')
+const imageUrlInput = ref('')
+const imageAlt = ref('')
+const pendingImageSelection = ref({ start: 0, end: 0 })
+const canConfirmImage = computed(() =>
+  imageMode.value === 'upload' ? !!imageUploadedUrl.value : !!imageUrlInput.value.trim(),
+)
+
+const linkRules: FormRules = {
+  url: [
+    { required: true, message: '请输入链接地址', trigger: 'blur' },
+    {
+      validator: (_rule, value: string, callback) => {
+        if (!value?.trim()) {
+          callback(new Error('请输入链接地址'))
+          return
+        }
+        callback()
+      },
+      trigger: 'blur',
+    },
+  ],
+}
 
 // 编辑模式
 const mode = ref<'edit' | 'preview' | 'fullscreen'>('preview')
+
+const saveTitle = computed(() => {
+  if (props.disabled) return '请先选择目录'
+  if (props.saving) return '保存中…'
+  if (!props.dirty) return '已保存'
+  return '保存当前目录内容 (⌘S / Ctrl+S)'
+})
 
 // 切换模式
 function switchMode(newMode: 'edit' | 'preview' | 'fullscreen') {
   mode.value = newMode
 }
 
-// 保存功能
 function save() {
-  // TODO: 实现保存逻辑
-  console.log('保存文档:', content.value)
+  if (props.disabled || props.saving || !props.dirty) return
   emit('update:modelValue', content.value)
+  emit('save')
 }
 
-// Markdown 渲染函数
-function renderMarkdown(markdown: string): string {
-  if (!markdown) return ''
-  
-  let html = markdown
-  
-  // 先处理代码块（避免代码块内的内容被其他规则处理）
-  const codeBlocks: string[] = []
-  html = html.replace(/```[\s\S]*?```/g, (match) => {
-    const index = codeBlocks.length
-    codeBlocks.push(match)
-    // 使用大括号占位符，避免与 Markdown 的下划线语法冲突
-    return `{{MARKDOWN-CODE-BLOCK-${index}}}`
-  })
-  
-  // 转义 HTML 特殊字符（除了我们允许的标签）
-  html = html
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-  
-  // 恢复允许的 HTML 标签（如对齐标签）
-  html = html
-    .replace(/&lt;div align="(left|center|right|justify)"&gt;/g, '<div align="$1">')
-    .replace(/&lt;\/div&gt;/g, '</div>')
-  
-  // 标题（按从大到小顺序处理，避免冲突）
-  html = html.replace(/^###### (.*$)/gim, '<h6>$1</h6>')
-  html = html.replace(/^##### (.*$)/gim, '<h5>$1</h5>')
-  html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-  html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>')
-  html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>')
-  html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>')
-  
-  // 水平线
-  html = html.replace(/^---$/gim, '<hr>')
-  html = html.replace(/^\*\*\*$/gim, '<hr>')
-  html = html.replace(/^___$/gim, '<hr>')
-  
-  // 行内代码
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>')
-  
-  // 粗体
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-  html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>')
-  
-  // 斜体（在粗体之后处理，避免冲突）
-  html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
-  html = html.replace(/(?<!_)_([^_]+)_(?!_)/g, '<em>$1</em>')
-  
-  // 删除线
-  html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>')
-  
-  // 链接
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-  
-  // 图片
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
-  
-  // 恢复代码块
-  codeBlocks.forEach((codeBlock, index) => {
-    const code = codeBlock.replace(/```[\w]*\n?/g, '').replace(/```/g, '').trim()
-    html = html.replace(`{{MARKDOWN-CODE-BLOCK-${index}}}`, `<pre><code>${escapeHtml(code)}</code></pre>`)
-  })
-  
-  // 按行处理
-  const lines = html.split('\n')
-  const result: string[] = []
-  let inList = false
-  let listType: 'ul' | 'ol' | 'task' | null = null
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    if (line === undefined) continue
-    const trimmed = line.trim()
-    
-    // 空行
-    if (!trimmed) {
-      if (inList) {
-        result.push(`</${listType === 'ol' ? 'ol' : 'ul'}>`)
-        inList = false
-        listType = null
-      }
-      continue
-    }
-    
-    // 水平线
-    if (trimmed === '<hr>') {
-      if (inList) {
-        result.push(`</${listType === 'ol' ? 'ol' : 'ul'}>`)
-        inList = false
-        listType = null
-      }
-      result.push('<hr>')
-      continue
-    }
-    
-    // 标题
-    if (trimmed.match(/^<h[1-6]>/)) {
-      if (inList) {
-        result.push(`</${listType === 'ol' ? 'ol' : 'ul'}>`)
-        inList = false
-        listType = null
-      }
-      result.push(trimmed)
-      continue
-    }
-    
-    // 任务列表
-    if (trimmed.match(/^[-*+] \[[ x]\] /)) {
-      if (!inList || listType !== 'task') {
-        if (inList) {
-          result.push(`</${listType === 'ol' ? 'ol' : 'ul'}>`)
-        }
-        result.push('<ul class="task-list">')
-        inList = true
-        listType = 'task'
-      }
-      const content = trimmed.replace(/^[-*+] \[([ x])\] /, '')
-      const checked = trimmed.match(/\[x\]/) ? 'checked' : ''
-      result.push(`<li class="task-list-item"><input type="checkbox" ${checked} disabled> ${content}</li>`)
-      continue
-    }
-    
-    // 无序列表
-    if (trimmed.match(/^[-*+] /)) {
-      if (!inList || listType !== 'ul') {
-        if (inList) {
-          result.push(`</${listType === 'ol' ? 'ol' : 'ul'}>`)
-        }
-        result.push('<ul>')
-        inList = true
-        listType = 'ul'
-      }
-      const content = trimmed.replace(/^[-*+] /, '')
-      result.push(`<li>${content}</li>`)
-      continue
-    }
-    
-    // 有序列表
-    if (trimmed.match(/^\d+\. /)) {
-      if (!inList || listType !== 'ol') {
-        if (inList) {
-          result.push(`</${listType === 'ul' ? 'ul' : 'ul'}>`)
-        }
-        result.push('<ol>')
-        inList = true
-        listType = 'ol'
-      }
-      const content = trimmed.replace(/^\d+\. /, '')
-      result.push(`<li>${content}</li>`)
-      continue
-    }
-    
-    // 引用
-    if (trimmed.startsWith('&gt; ')) {
-      if (inList) {
-        result.push(`</${listType === 'ol' ? 'ol' : 'ul'}>`)
-        inList = false
-        listType = null
-      }
-      const content = trimmed.replace(/^&gt; /, '')
-      result.push(`<blockquote>${content}</blockquote>`)
-      continue
-    }
-    
-    // 代码块
-    if (trimmed.startsWith('<pre>')) {
-      if (inList) {
-        result.push(`</${listType === 'ol' ? 'ol' : 'ul'}>`)
-        inList = false
-        listType = null
-      }
-      result.push(trimmed)
-      continue
-    }
-    
-    // 普通段落
-    if (inList) {
-      result.push(`</${listType === 'ol' ? 'ol' : 'ul'}>`)
-      inList = false
-      listType = null
-    }
-    
-    if (trimmed && !trimmed.startsWith('<')) {
-      result.push(`<p>${trimmed}</p>`)
-    } else {
-      result.push(trimmed)
-    }
-  }
-  
-  // 关闭未闭合的列表
-  if (inList) {
-    result.push(`</${listType === 'ol' ? 'ol' : 'ul'}>`)
-  }
-  
-  return result.join('\n')
-}
-
-// HTML 转义函数
-function escapeHtml(text: string): string {
-  const div = document.createElement('div')
-  div.textContent = text
-  return div.innerHTML
-}
-
-// 计算渲染后的内容
 const renderedContent = computed(() => renderMarkdown(content.value))
 
 // 更新历史记录
@@ -650,26 +633,78 @@ function updateUndoRedoState() {
   canRedo.value = historyIndex.value < history.value.length - 1
 }
 
-// 获取选中文本
+// 获取选中文本（失焦时回退到上次记住的光标）
+function rememberSelection() {
+  const textarea = editorRef.value
+  if (!textarea) return
+  savedSelection.value = {
+    start: textarea.selectionStart,
+    end: textarea.selectionEnd,
+  }
+}
+
 function getSelection() {
   const textarea = editorRef.value
-  if (!textarea) return { start: 0, end: 0, text: '' }
-  
-  const start = textarea.selectionStart
-  const end = textarea.selectionEnd
-  const text = content.value.substring(start, end)
-  
-  return { start, end, text }
+  const len = content.value.length
+
+  if (textarea && document.activeElement === textarea) {
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    savedSelection.value = { start, end }
+    return { start, end, text: content.value.substring(start, end) }
+  }
+
+  const start = Math.min(Math.max(0, savedSelection.value.start), len)
+  const end = Math.min(Math.max(0, savedSelection.value.end), len)
+  return { start, end, text: content.value.substring(start, end) }
 }
 
 // 设置选中文本
 function setSelection(start: number, end: number) {
+  savedSelection.value = { start, end }
   nextTick(() => {
     const textarea = editorRef.value
     if (!textarea) return
     textarea.focus()
     textarea.setSelectionRange(start, end)
+    savedSelection.value = { start, end }
   })
+}
+
+/** 根据光标位置解析当前行（含行尾光标） */
+function getLineAt(pos: number) {
+  const lines = content.value.split('\n')
+  let lineStart = 0
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i] ?? ''
+    const lineEnd = lineStart + line.length
+    if (pos >= lineStart && pos <= lineEnd) {
+      return { lines, currentLine: i, lineStart, lineEnd, line }
+    }
+    lineStart = lineEnd + 1
+  }
+
+  const currentLine = Math.max(0, lines.length - 1)
+  const line = lines[currentLine] ?? ''
+  const lastStart = content.value.length - line.length
+  return {
+    lines,
+    currentLine,
+    lineStart: lastStart,
+    lineEnd: content.value.length,
+    line,
+  }
+}
+
+function getListPrefix(line: string): string | null {
+  const task = line.match(/^(\s*- \[[ xX]\] )/)
+  if (task?.[1]) return task[1]
+  const ordered = line.match(/^(\s*\d+\. )/)
+  if (ordered?.[1]) return ordered[1]
+  const unordered = line.match(/^(\s*[-*+] )/)
+  if (unordered?.[1]) return unordered[1]
+  return null
 }
 
 // 插入文本
@@ -739,23 +774,9 @@ function insertHeading(level: number) {
   
   if (text) {
     // 如果选中了文本，在行首插入标题标记
-    const lines = content.value.split('\n')
-    let lineStart = 0
-    let currentLine = 0
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i]
-      if (line === undefined) continue
-      const lineEnd = lineStart + line.length
-      if (start >= lineStart && start < lineEnd) {
-        currentLine = i
-        break
-      }
-      lineStart = lineEnd + 1
-    }
+    const { lines, currentLine, line } = getLineAt(start)
     
     // 检查是否已经是标题
-    const line = lines[currentLine]
     if (line !== undefined) {
       const headingMatch = line.match(/^(#{1,6})\s+/)
       if (headingMatch) {
@@ -778,102 +799,283 @@ function insertHeading(level: number) {
 // 插入对齐（Markdown 本身不支持对齐，这里使用 HTML 标签）
 function insertAlign(align: 'left' | 'center' | 'right' | 'justify') {
   const { start, end, text } = getSelection()
-  // end 用于计算选中文本的结束位置
-  const alignMap = {
-    left: '<div align="left">',
-    center: '<div align="center">',
-    right: '<div align="right">',
-    justify: '<div align="justify">',
-  }
+  const open = `<div align="${align}">`
+  const close = '</div>'
   
   if (text) {
-    const wrapped = alignMap[align] + text + '</div>'
+    const wrapped = open + text + close
     const before = content.value.substring(0, start)
     const after = content.value.substring(end)
     content.value = before + wrapped + after
     updateHistory()
-    setSelection(start, start + wrapped.length)
+    setSelection(start + open.length, start + open.length + text.length)
   } else {
-    insertText(alignMap[align] + '\n\n</div>')
+    const snippet = `${open}\n\n${close}`
+    const before = content.value.substring(0, start)
+    const after = content.value.substring(end)
+    content.value = before + snippet + after
+    updateHistory()
+    // 光标落在开标签后的空行，方便直接输入
+    const cursor = start + open.length + 1
+    setSelection(cursor, cursor)
   }
 }
 
-// 插入列表
+// 插入列表：在当前行写入标记，光标落在标记后方便直接输入
 function insertList(type: 'unordered' | 'ordered' | 'task') {
   const { start } = getSelection()
-  const lines = content.value.split('\n')
-  let lineStart = 0
-  let currentLine = 0
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    if (line === undefined) continue
-    const lineEnd = lineStart + line.length
-    if (start >= lineStart && start < lineEnd) {
-      currentLine = i
-      break
-    }
-    lineStart = lineEnd + 1
-  }
-  
+  const { lines, currentLine, lineStart, line } = getLineAt(start)
   const prefix = type === 'unordered' ? '- ' : type === 'ordered' ? '1. ' : '- [ ] '
-  const line = lines[currentLine]
-  
-  if (line === undefined) return
-  
-  // 检查是否已经是列表项
-  if (line.match(/^[-*+]\s|^\d+\.\s|^[-*+]\s\[[\sx]\]\s/i)) {
-    // 已经是列表，不重复添加
+
+  const existing = getListPrefix(line)
+  if (existing) {
+    // 已是列表项：光标移到标记后，便于继续编辑
+    setSelection(lineStart + existing.length, lineStart + line.length)
     return
   }
-  
+
+  if (!line.trim()) {
+    lines[currentLine] = prefix
+    content.value = lines.join('\n')
+    updateHistory()
+    setSelection(lineStart + prefix.length, lineStart + prefix.length)
+    return
+  }
+
   lines[currentLine] = prefix + line
   content.value = lines.join('\n')
   updateHistory()
-  setSelection(start + prefix.length, start + prefix.length + line.length)
+  setSelection(lineStart + prefix.length, lineStart + prefix.length + line.length)
 }
 
-// 插入链接
+function isLikelyUrl(value: string): boolean {
+  const v = value.trim()
+  if (!v || /\s/.test(v)) return false
+  if (/^(https?:\/\/|mailto:|tel:)/i.test(v)) return true
+  return /^[\w.-]+\.[\w.-]+(\/[\w./?%&=+#-]*)?$/i.test(v)
+}
+
+function normalizeUrl(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return trimmed
+  if (/^(https?:\/\/|mailto:|tel:|\/\/)/i.test(trimmed)) return trimmed
+  if (/^[\w.-]+\.[\w.-]+/i.test(trimmed)) return `https://${trimmed}`
+  return trimmed
+}
+
+function resetLinkForm() {
+  linkForm.text = ''
+  linkForm.url = ''
+  linkFormRef.value?.clearValidate()
+}
+
+function handleLinkDialogClosed() {
+  resetLinkForm()
+  const { start, end } = pendingLinkSelection.value
+  setSelection(start, end)
+}
+
+function focusLinkDialogField() {
+  nextTick(() => {
+    const target = linkForm.text.trim() ? linkUrlInputRef.value : linkTextInputRef.value
+    target?.focus()
+  })
+}
+
+// 插入链接：弹窗填写显示文本与地址，避免只插入空 URL 模板
 function insertLink() {
   const { start, end, text } = getSelection()
-  const linkText = text || '链接文本'
-  const linkUrl = 'https://'
-  const markdown = `[${linkText}](${linkUrl})`
-  
-  if (text) {
-    const before = content.value.substring(0, start)
-    const after = content.value.substring(end)
-    content.value = before + markdown + after
-    updateHistory()
-    setSelection(start + linkText.length + 3, start + markdown.length - 1)
+  pendingLinkSelection.value = { start, end }
+
+  const selected = text.trim()
+  if (selected && isLikelyUrl(selected)) {
+    linkForm.text = selected
+    linkForm.url = normalizeUrl(selected)
   } else {
-    insertText(markdown, true)
-    // 选中 URL 部分
-    nextTick(() => {
-      setSelection(start + linkText.length + 3, start + markdown.length - 1)
-    })
+    linkForm.text = selected
+    linkForm.url = ''
+  }
+
+  linkDialogVisible.value = true
+}
+
+async function confirmInsertLink() {
+  const form = linkFormRef.value
+  if (!form) return
+
+  try {
+    await form.validate()
+  } catch {
+    return
+  }
+
+  const url = normalizeUrl(linkForm.url)
+  const text = linkForm.text.trim() || url
+  if (!url) return
+
+  const { start, end } = pendingLinkSelection.value
+  const markdown = `[${text}](${url})`
+  const before = content.value.substring(0, start)
+  const after = content.value.substring(end)
+  content.value = before + markdown + after
+  updateHistory()
+
+  const cursor = start + markdown.length
+  pendingLinkSelection.value = { start: cursor, end: cursor }
+  linkDialogVisible.value = false
+}
+
+// 插入图片：弹窗选择本地上传或外链，避免只插入空 URL 模板
+function insertImage() {
+  const { start, end, text } = getSelection()
+  pendingImageSelection.value = { start, end }
+
+  imageMode.value = 'upload'
+  imageAlt.value = text.trim()
+  imageUrlInput.value = ''
+  imageUploadedUrl.value = ''
+  imageDialogVisible.value = true
+}
+
+function handleImageDialogClosed() {
+  imageMode.value = 'upload'
+  imageAlt.value = ''
+  imageUrlInput.value = ''
+  imageUploadedUrl.value = ''
+  imageUploading.value = false
+  if (imageFileInputRef.value) imageFileInputRef.value.value = ''
+  const { start, end } = pendingImageSelection.value
+  setSelection(start, end)
+}
+
+async function handleImageFileChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    ElMessage.warning('仅支持 jpg / png / webp / gif 格式的图片')
+    input.value = ''
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.warning('图片大小不能超过 5MB')
+    input.value = ''
+    return
+  }
+
+  imageUploading.value = true
+  try {
+    const res: any = await uploadNoteImage(file)
+    const url = res?.data?.url
+    if (!url) throw new Error('上传失败')
+    imageUploadedUrl.value = url
+    if (!imageAlt.value.trim()) {
+      imageAlt.value = file.name.replace(/\.[^.]+$/, '')
+    }
+  } catch (error: any) {
+    ElMessage.error(error?.message || '图片上传失败，请稍后重试')
+    imageUploadedUrl.value = ''
+  } finally {
+    imageUploading.value = false
+    input.value = ''
   }
 }
 
-// 插入图片
-function insertImage() {
-  const { start, end, text } = getSelection()
-  const altText = text || '图片描述'
-  const imageUrl = 'https://'
-  const markdown = `![${altText}](${imageUrl})`
-  
-  if (text) {
-    const before = content.value.substring(0, start)
-    const after = content.value.substring(end)
-    content.value = before + markdown + after
-    updateHistory()
-    setSelection(start + altText.length + 4, start + markdown.length - 1)
-  } else {
-    insertText(markdown, true)
-    nextTick(() => {
-      setSelection(start + altText.length + 4, start + markdown.length - 1)
-    })
+function confirmInsertImage() {
+  const url = imageMode.value === 'upload' ? imageUploadedUrl.value : normalizeUrl(imageUrlInput.value)
+  if (!url) return
+
+  const alt = imageAlt.value.trim() || '图片描述'
+  const { start, end } = pendingImageSelection.value
+  const markdown = `![${alt}](${url})`
+  const before = content.value.substring(0, start)
+  const after = content.value.substring(end)
+  content.value = before + markdown + after
+  updateHistory()
+
+  const cursor = start + markdown.length
+  pendingImageSelection.value = { start: cursor, end: cursor }
+  imageDialogVisible.value = false
+}
+
+/**
+ * 粘贴/拖拽本地图片：先插入一段可读的上传中占位文字，上传成功后原地替换为
+ * 真正的图片 Markdown；避免像浏览器默认粘贴那样把剪贴板里的文件名当纯文本
+ * 插进笔记（预览区就会显示成 `!screenshot_xxx` 这种无法渲染的原始文本）。
+ */
+async function uploadAndInsertImage(file: File) {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    ElMessage.warning('仅支持 jpg / png / webp / gif 格式的图片')
+    return
   }
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.warning('图片大小不能超过 5MB')
+    return
+  }
+
+  const { start, end } = getSelection()
+  const before = content.value.substring(0, start)
+  const after = content.value.substring(end)
+  const label = (file.name || '图片').replace(/\.[^.]+$/, '') || '图片'
+  const placeholder = `*⏳ 正在上传图片：${label}…*`
+
+  content.value = before + placeholder + after
+  const cursorAfterPlaceholder = start + placeholder.length
+  setSelection(cursorAfterPlaceholder, cursorAfterPlaceholder)
+
+  try {
+    const res: any = await uploadNoteImage(file)
+    const url = res?.data?.url
+    if (!url) throw new Error('上传失败')
+
+    const markdown = `![${label}](${url})`
+    const idx = content.value.indexOf(placeholder)
+    if (idx !== -1) {
+      content.value = content.value.substring(0, idx) + markdown + content.value.substring(idx + placeholder.length)
+      const cursor = idx + markdown.length
+      setSelection(cursor, cursor)
+    } else {
+      content.value += markdown
+    }
+  } catch (error: any) {
+    const idx = content.value.indexOf(placeholder)
+    if (idx !== -1) {
+      content.value = content.value.substring(0, idx) + content.value.substring(idx + placeholder.length)
+      setSelection(idx, idx)
+    }
+    ElMessage.error(error?.message || '图片上传失败，请稍后重试')
+  } finally {
+    updateHistory()
+  }
+}
+
+// 粘贴图片：拦截剪贴板中的图片数据直接上传，其余情况走浏览器默认文本粘贴
+async function handlePasteImage(e: ClipboardEvent) {
+  const items = e.clipboardData?.items
+  if (!items || items.length === 0) return
+
+  const imageItem = Array.from(items).find(
+    (item) => item.kind === 'file' && item.type.startsWith('image/'),
+  )
+  if (!imageItem) return
+
+  const file = imageItem.getAsFile()
+  if (!file) return
+
+  e.preventDefault()
+  await uploadAndInsertImage(file)
+}
+
+// 拖拽图片文件到编辑区：自动上传并在光标/落点处插入
+async function handleDropImage(e: DragEvent) {
+  const file = Array.from(e.dataTransfer?.files ?? []).find((f) => f.type.startsWith('image/'))
+  if (!file) return
+
+  e.preventDefault()
+  await uploadAndInsertImage(file)
 }
 
 // 插入代码块
@@ -895,27 +1097,18 @@ function insertCodeBlock() {
   }
 }
 
-// 插入水平线
+// 插入水平线（在当前光标处）
 function insertHorizontalRule() {
-  const { start } = getSelection()
-  const lines = content.value.split('\n')
-  let lineStart = 0
-  let currentLine = 0
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    if (line === undefined) continue
-    const lineEnd = lineStart + line.length
-    if (start >= lineStart && start < lineEnd) {
-      currentLine = i
-      break
-    }
-    lineStart = lineEnd + 1
-  }
-  
-  lines.splice(currentLine + 1, 0, '---')
-  content.value = lines.join('\n')
+  const { start, end } = getSelection()
+  const before = content.value.substring(0, start)
+  const after = content.value.substring(end)
+
+  const needsLeadingNewline = before.length > 0 && !before.endsWith('\n')
+  const snippet = `${needsLeadingNewline ? '\n' : ''}\n---\n\n`
+  content.value = before + snippet + after
   updateHistory()
+  const cursor = before.length + snippet.length
+  setSelection(cursor, cursor)
 }
 
 // 插入引用
@@ -936,24 +1129,126 @@ function insertBlockquote() {
   }
 }
 
-// 插入表格
+// 插入表格（光标处插入，并选中首个表头单元格便于直接改）
 function insertTable() {
+  const { start, end } = getSelection()
+  const before = content.value.substring(0, start)
+  const after = content.value.substring(end)
+  const needsLeadingNewline = before.length > 0 && !before.endsWith('\n')
   const table = `| 列1 | 列2 | 列3 |
 |-----|-----|-----|
 | 内容1 | 内容2 | 内容3 |
 | 内容4 | 内容5 | 内容6 |`
-  
-  insertText(table)
+  const snippet = `${needsLeadingNewline ? '\n' : ''}${table}\n`
+  content.value = before + snippet + after
+  updateHistory()
+  const cellStart = before.length + (needsLeadingNewline ? 1 : 0) + 2
+  setSelection(cellStart, cellStart + '列1'.length)
 }
 
 // 处理输入
 function handleInput() {
+  rememberSelection()
   updateHistory()
   emit('update:modelValue', content.value)
 }
 
+/** Enter 时延续当前列表项；空列表项再按 Enter 则退出列表 */
+function tryContinueListOnEnter(e: KeyboardEvent): boolean {
+  const { start, end } = getSelection()
+  if (start !== end) return false
+
+  const { line, lineStart } = getLineAt(start)
+
+  const taskMatch = line.match(/^(\s*)- \[([ xX])\] (.*)$/)
+  if (taskMatch) {
+    const indent = taskMatch[1] ?? ''
+    const itemText = taskMatch[3] ?? ''
+    e.preventDefault()
+    if (!itemText.trim()) {
+      // 空任务项：去掉标记，退出列表
+      const before = content.value.substring(0, lineStart)
+      const after = content.value.substring(lineStart + line.length)
+      content.value = before + indent + after
+      updateHistory()
+      setSelection(lineStart + indent.length, lineStart + indent.length)
+      return true
+    }
+    const marker = `\n${indent}- [ ] `
+    const before = content.value.substring(0, start)
+    const after = content.value.substring(start)
+    content.value = before + marker + after
+    updateHistory()
+    setSelection(start + marker.length, start + marker.length)
+    return true
+  }
+
+  const orderedMatch = line.match(/^(\s*)(\d+)\. (.*)$/)
+  if (orderedMatch) {
+    const indent = orderedMatch[1] ?? ''
+    const num = parseInt(orderedMatch[2] ?? '1', 10)
+    const itemText = orderedMatch[3] ?? ''
+    e.preventDefault()
+    if (!itemText.trim()) {
+      const before = content.value.substring(0, lineStart)
+      const after = content.value.substring(lineStart + line.length)
+      content.value = before + indent + after
+      updateHistory()
+      setSelection(lineStart + indent.length, lineStart + indent.length)
+      return true
+    }
+    const marker = `\n${indent}${num + 1}. `
+    const before = content.value.substring(0, start)
+    const after = content.value.substring(start)
+    content.value = before + marker + after
+    updateHistory()
+    setSelection(start + marker.length, start + marker.length)
+    return true
+  }
+
+  // 无序列表（排除任务列表）
+  if (!/^(\s*)[-*+] \[/.test(line)) {
+    const unorderedMatch = line.match(/^(\s*)([-*+]) (.*)$/)
+    if (unorderedMatch) {
+      const indent = unorderedMatch[1] ?? ''
+      const bullet = unorderedMatch[2] ?? '-'
+      const itemText = unorderedMatch[3] ?? ''
+      e.preventDefault()
+      if (!itemText.trim()) {
+        const before = content.value.substring(0, lineStart)
+        const after = content.value.substring(lineStart + line.length)
+        content.value = before + indent + after
+        updateHistory()
+        setSelection(lineStart + indent.length, lineStart + indent.length)
+        return true
+      }
+      const marker = `\n${indent}${bullet} `
+      const before = content.value.substring(0, start)
+      const after = content.value.substring(start)
+      content.value = before + marker + after
+      updateHistory()
+      setSelection(start + marker.length, start + marker.length)
+      return true
+    }
+  }
+
+  return false
+}
+
 // 处理键盘事件
 function handleKeydown(e: KeyboardEvent) {
+  // Ctrl/Cmd + S 保存当前目录内容
+  if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+    e.preventDefault()
+    save()
+    return
+  }
+
+  // Enter 延续列表
+  if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    if (tryContinueListOnEnter(e)) return
+  }
+
   // Tab 键插入空格
   if (e.key === 'Tab' && !e.shiftKey) {
     e.preventDefault()
@@ -1023,7 +1318,23 @@ watch(content, (newVal) => {
     &-right {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 8px;
+    }
+  }
+
+  &__save-status {
+    font-size: 12px;
+    color: #9b9b9b;
+    white-space: nowrap;
+    user-select: none;
+
+    &.is-dirty {
+      color: #5a9e58;
+      font-weight: 500;
+    }
+
+    &.is-saving {
+      color: #6b6b6b;
     }
   }
 
@@ -1160,14 +1471,20 @@ watch(content, (newVal) => {
       margin-bottom: 16px;
       width: 100%;
 
-      th, td {
-        padding: 6px 13px;
+      th,
+      td {
+        padding: 8px 13px;
         border: 1px solid #dfe2e5;
+        word-break: break-word;
       }
 
       th {
         background-color: #f6f8fa;
         font-weight: 600;
+      }
+
+      tbody tr:nth-child(2n) {
+        background-color: #fafbfc;
       }
     }
 
@@ -1264,27 +1581,39 @@ watch(content, (newVal) => {
   }
 
   &--save {
-    background-color: #5a9e58;
-    color: #fff;
-    font-weight: 600;
-    margin-right: 16px;
-    
-    &:hover {
+    width: auto;
+    min-width: 32px;
+    padding: 0 10px;
+    gap: 6px;
+    margin-right: 8px;
+    background-color: #ececec;
+    color: #6b6b6b;
+    font-weight: 500;
+    transition: background-color 160ms ease, color 160ms ease, opacity 160ms ease;
+
+    .toolbar-btn__label {
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    &.is-dirty {
+      background-color: #5a9e58;
+      color: #fff;
+    }
+
+    &:hover:not(:disabled) {
+      background-color: #dcdcdc;
+      color: #111;
+    }
+
+    &.is-dirty:hover:not(:disabled) {
       background-color: #4a8548;
-      transform: scale(1.05);
+      color: #fff;
     }
-    
-    &:active {
-      background-color: #3d7340;
-      transform: scale(0.95);
-    }
-    
-    svg {
-      animation: none;
-    }
-    
-    &:hover svg {
-      animation: savePulse 0.6s ease-in-out;
+
+    &:disabled {
+      opacity: 0.55;
+      transform: none;
     }
   }
 
@@ -1301,13 +1630,50 @@ watch(content, (newVal) => {
   }
 }
 
-@keyframes savePulse {
-  0%, 100% {
-    transform: translateY(0);
+.image-insert {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &__upload {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
-  50% {
-    transform: translateY(-2px);
+
+  &__upload-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__file-input {
+    display: none;
+  }
+
+  &__hint {
+    font-size: 12px;
+    color: #9b9b9b;
+  }
+
+  &__preview {
+    width: 100%;
+    max-height: 180px;
+    overflow: hidden;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      max-width: 100%;
+      max-height: 180px;
+      object-fit: contain;
+    }
   }
 }
 </style>
+
 

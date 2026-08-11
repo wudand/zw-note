@@ -3,25 +3,27 @@
     <div class="document-edit__container">
       <splitpanes>
         <pane size="15">
-          <!-- <aside class="document-edit__sidebar"> -->
-            <DocumentOutline
-              v-model="outline"
-              :showEdit="true"
-              @item-click="handleOutlineClick"
-              @item-change="handleOutlineChange"
-            />
-          <!-- </aside>           -->
+          <DocumentOutline
+            v-model="outline"
+            :showEdit="true"
+            :title="currentDocument?.title"
+            @item-click="handleOutlineClick"
+          />
         </pane>
         <pane>
-          <main class="document-edit__main">
+          <main class="document-edit__main" v-loading="contentLoading">
             <div class="document-edit__editor">
               <MarkdownEditor
                 v-model="content"
                 placeholder="请输入文档内容..."
                 height="100%"
+                :dirty="dirty"
+                :saving="contentSaving"
+                :disabled="!currentOutlineId || contentLoading"
+                @save="handleSave"
               />
             </div>
-          </main>          
+          </main>
         </pane>
       </splitpanes>
     </div>
@@ -29,9 +31,16 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent, onBeforeUnmount } from 'vue'
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  defineAsyncComponent,
+} from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRoute } from 'vue-router'
+import { useRoute, onBeforeRouteLeave } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { OutlineItem } from '@/components/DocumentOutline/index.vue'
 import { useDocumentStore } from '@/store/documentStore'
 
@@ -40,25 +49,113 @@ const DocumentOutline = defineAsyncComponent(() => import('@/components/Document
 
 const route = useRoute()
 const store = useDocumentStore()
-const { currentOutline: outline, currentContent: content } = storeToRefs(store)
+const {
+  currentDocument,
+  currentOutline: outline,
+  currentContent: content,
+  currentOutlineId,
+  contentLoading,
+  contentSaving,
+} = storeToRefs(store)
 
-function handleOutlineClick(item: OutlineItem) {
-  store.fetchContent(item.id)
+/** 当前节点上次成功保存（或加载）时的内容快照 */
+const lastSavedContent = ref('')
+const dirty = computed(() => content.value !== lastSavedContent.value)
+
+async function loadOutlineContent(outlineId: string) {
+  await store.fetchContent(outlineId)
+  lastSavedContent.value = content.value
 }
 
-function handleOutlineChange(_items: OutlineItem[]) {
-  // TODO: 对接保存目录结构接口
+async function persistCurrent(): Promise<boolean> {
+  if (!currentOutlineId.value) {
+    ElMessage.warning('请先选择目录节点')
+    return false
+  }
+  if (!dirty.value) {
+    ElMessage.info('没有需要保存的修改')
+    return true
+  }
+
+  try {
+    const saved = await store.saveContent(currentOutlineId.value, content.value)
+    lastSavedContent.value = saved
+    ElMessage.success('保存成功')
+    return true
+  } catch (error: any) {
+    ElMessage.error(error?.message || '保存失败，请稍后重试')
+    return false
+  }
 }
+
+async function handleSave() {
+  await persistCurrent()
+}
+
+/**
+ * 有未保存修改时：确认=保存并继续，取消=不保存继续，关闭=中止
+ */
+async function confirmLeaveIfDirty(message: string): Promise<'proceed' | 'abort'> {
+  if (!dirty.value) return 'proceed'
+
+  try {
+    await ElMessageBox.confirm(message, '未保存的修改', {
+      distinguishCancelAndClose: true,
+      confirmButtonText: '保存并继续',
+      cancelButtonText: '不保存',
+      type: 'warning',
+    })
+    const ok = await persistCurrent()
+    return ok ? 'proceed' : 'abort'
+  } catch (action) {
+    if (action === 'cancel') return 'proceed'
+    return 'abort'
+  }
+}
+
+async function handleOutlineClick(item: OutlineItem) {
+  if (item.id === currentOutlineId.value) return
+
+  const result = await confirmLeaveIfDirty('当前目录内容尚未保存，切换前如何处理？')
+  if (result === 'abort') return
+
+  try {
+    await loadOutlineContent(item.id)
+  } catch (error: any) {
+    ElMessage.error(error?.message || '加载内容失败')
+  }
+}
+
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (!dirty.value) return
+  e.preventDefault()
+  e.returnValue = ''
+}
+
+onBeforeRouteLeave(async (_to, _from, next) => {
+  const result = await confirmLeaveIfDirty('当前目录内容尚未保存，离开前如何处理？')
+  next(result === 'proceed')
+})
 
 onMounted(async () => {
+  window.addEventListener('beforeunload', onBeforeUnload)
+
   const documentId = route.params.id as string
-  await store.fetchOutline(documentId)
-  if (outline.value.length > 0 && outline.value[0]) {
-    store.fetchContent(outline.value[0].id)
+  try {
+    await Promise.all([
+      store.fetchDocumentById(documentId),
+      store.fetchOutline(documentId),
+    ])
+    if (outline.value.length > 0 && outline.value[0]) {
+      await loadOutlineContent(outline.value[0].id)
+    }
+  } catch (error: any) {
+    ElMessage.error(error?.message || '加载目录失败')
   }
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', onBeforeUnload)
   store.resetCurrentDocument()
 })
 </script>
@@ -66,7 +163,7 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .document-edit {
   height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #f7f7f5;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -91,6 +188,7 @@ onBeforeUnmount(() => {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    background: #fff;
   }
 
   &__editor {
@@ -123,8 +221,7 @@ onBeforeUnmount(() => {
 
 .splitpanes {
   :deep(.splitpanes__splitter) {
-    background-color: #ddd;
+    background-color: #e8e8e5;
   }
 }
 </style>
-

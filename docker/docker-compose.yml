@@ -19,6 +19,9 @@ services:
       APP_DATABASE_DSN: "postgres://hsop:P0stgre2022@host.docker.internal:5432/zw-note?sslmode=disable"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    volumes:
+      # 持久化上传的图片等文件，避免容器重建后丢失（对应 config.yaml 的 upload.dir）
+      - note-uploads:/app/uploads
 
   frontend:
     build:
@@ -54,3 +57,4 @@ services:
 
 volumes:
   pgdata:
+  note-uploads:

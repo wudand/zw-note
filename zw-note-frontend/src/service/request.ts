@@ -23,8 +23,9 @@ service.interceptors.request.use(
 
 service.interceptors.response.use(
   (response: AxiosResponse<any>) => {
-    if (response.data.code === 1) {
-      throw response.data;
+    // 后端统一：code === 0 成功；非 0 为业务错误
+    if (response.data?.code !== undefined && response.data.code !== 0) {
+      return Promise.reject(response.data);
     }
     return response.data;
   },

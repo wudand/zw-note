@@ -2,31 +2,30 @@
     <div class="outline">
         <div class="outline__header">
             <div class="outline__header_left">
-                <!-- 返回上一页 -->
-                <div class="return-btn" @click="handleReturn">
-                <el-icon :size="16">
-                    <Back />
-                </el-icon>
-                </div>
-                <h3 class="outline__title">目录</h3>        
+                <button type="button" class="outline__back" aria-label="返回" @click="handleReturn">
+                  <el-icon :size="16"><Back /></el-icon>
+                </button>
+                <h3 class="outline__title" :title="props.title || '目录'">{{ props.title || '目录' }}</h3>
             </div>
-            <el-button
+            <button
               v-if="props.showEdit"
-              type="success"
-              size="small"
-              :icon="Plus"
+              type="button"
+              class="outline__add"
               aria-label="新建目录"
               @click="handleAdd"
-            ></el-button>
+            >
+              <el-icon :size="16"><Plus /></el-icon>
+            </button>
         </div>
         <div class="outline__content">
             <nav class="outline__nav">
+              <!-- 预览：只读列表 -->
+              <template v-if="!props.showEdit">
                 <div
                   v-for="(item, index) in outline"
                   :key="item.id"
                   class="outline__group"
                 >
-                  <!-- 父级目录项 -->
                   <div
                     class="outline__item outline__item--parent"
                     :class="{
@@ -34,9 +33,8 @@
                       'outline__item--expanded': expandedItems.has(item.id)
                     }"
                     @click="handleParentClick(item, index)"
-                    @contextmenu.prevent="props.showEdit ? handleContextMenu($event, item, index) : null"
                   >
-                    <span 
+                    <span
                       class="outline__item-icon"
                       v-if="hasChildren(item)"
                       @click.stop="toggleExpand(item.id)"
@@ -50,37 +48,132 @@
                     <span class="outline__item-text" :title="item.title">{{ item.title }}</span>
                   </div>
 
-                  <!-- 子级目录项 -->
                   <div
                     v-if="item.children && item.children.length > 0 && expandedItems.has(item.id)"
                     class="outline__children"
                   >
                     <div
-                      v-for="(child, childIndex) in item.children"
+                      v-for="child in item.children"
                       :key="child.id"
                       class="outline__item outline__item--child"
-                      :class="{
-                        'outline__item--active': activeItemId === child.id
-                      }"
+                      :class="{ 'outline__item--active': activeItemId === child.id }"
                       @click="handleChildClick(child, item, index)"
-                      @contextmenu.prevent="props.showEdit ? handleContextMenu($event, child, index, childIndex, item) : null"
                     >
                       <span class="outline__item-icon-placeholder"></span>
                       <span class="outline__item-text" :title="child.title">{{ child.title }}</span>
                     </div>
                   </div>
                 </div>
+              </template>
+
+              <!-- 编辑：可拖拽双层列表 -->
+              <draggable
+                v-else
+                v-model="outline"
+                item-key="id"
+                group="outline"
+                data-level="root"
+                class="outline__draggable outline__draggable--root"
+                :animation="180"
+                :disabled="reordering"
+                :delay="150"
+                :delay-on-touch-only="true"
+                handle=".outline__drag-handle"
+                ghost-class="outline__ghost"
+                chosen-class="outline__chosen"
+                drag-class="outline__drag"
+                :move="checkMove"
+                @start="onDragStart"
+                @end="onDragEnd"
+              >
+                <template #item="{ element, index }">
+                  <div class="outline__group">
+                    <div
+                      class="outline__item outline__item--parent"
+                      :class="{
+                        'outline__item--active': activeItemId === element.id,
+                        'outline__item--expanded': expandedItems.has(element.id)
+                      }"
+                      @click="handleParentClick(element, index)"
+                      @contextmenu.prevent="handleContextMenu($event, element, index)"
+                    >
+                      <span
+                        class="outline__drag-handle"
+                        title="拖动排序"
+                        @click.stop
+                      >
+                        <el-icon :size="14"><Rank /></el-icon>
+                      </span>
+                      <span
+                        class="outline__item-icon"
+                        v-if="hasChildren(element)"
+                        @click.stop="toggleExpand(element.id)"
+                      >
+                        <el-icon>
+                          <ArrowRight v-if="!expandedItems.has(element.id)" />
+                          <ArrowDown v-else />
+                        </el-icon>
+                      </span>
+                      <span v-else class="outline__item-icon-placeholder"></span>
+                      <span class="outline__item-text" :title="element.title">{{ element.title }}</span>
+                    </div>
+
+                    <draggable
+                      v-model="element.children"
+                      item-key="id"
+                      group="outline"
+                      data-level="child"
+                      class="outline__draggable outline__draggable--child outline__children"
+                      :class="{ 'outline__children--collapsed': !expandedItems.has(element.id) }"
+                      :animation="180"
+                      :disabled="reordering"
+                      :delay="150"
+                      :delay-on-touch-only="true"
+                      handle=".outline__drag-handle"
+                      ghost-class="outline__ghost"
+                      chosen-class="outline__chosen"
+                      drag-class="outline__drag"
+                      :move="checkMove"
+                      @start="onDragStart"
+                      @end="onDragEnd"
+                    >
+                      <template #item="{ element: child, index: childIndex }">
+                        <div
+                          class="outline__item outline__item--child"
+                          :class="{ 'outline__item--active': activeItemId === child.id }"
+                          @click="handleChildClick(child, element, index)"
+                          @contextmenu.prevent="handleContextMenu($event, child, index, childIndex, element)"
+                        >
+                          <span
+                            class="outline__drag-handle"
+                            title="拖动排序"
+                            @click.stop
+                          >
+                            <el-icon :size="14"><Rank /></el-icon>
+                          </span>
+                          <span class="outline__item-icon-placeholder"></span>
+                          <span class="outline__item-text" :title="child.title">{{ child.title }}</span>
+                        </div>
+                      </template>
+                    </draggable>
+                  </div>
+                </template>
+              </draggable>
             </nav>
         </div>
 
-        <!-- 右键菜单 -->
+        <!-- 右键菜单：仅一级目录可「新建目录」 -->
         <div
             v-if="contextMenuVisible"
             class="context-menu"
             :style="{ top: contextMenuPosition.y + 'px', left: contextMenuPosition.x + 'px' }"
             @click.stop
         >
-            <div class="context-menu__item" @click="handleNewItem">
+            <div
+              v-if="contextIsRootLevel"
+              class="context-menu__item"
+              @click="handleNewItem"
+            >
                 <el-icon><Plus /></el-icon>
                 <span>新建目录</span>
             </div>
@@ -94,46 +187,58 @@
             </div>
         </div>
 
-        <!-- 编辑对话框 -->
+        <!-- 编辑对话框：上级目录仅可选一级节点 -->
         <el-dialog
             v-model="editDialogVisible"
             :title="editingItem.id ? '编辑目录' : '新建目录'"
             width="400px"
+            @opened="focusTitleInput"
             @close="handleEditDialogClose"
         >
             <el-form :model="editingItem" label-width="80px">
                 <el-form-item label="目录标题">
-                    <el-input v-model="editingItem.title" placeholder="请输入目录标题" />
+                    <el-input ref="titleInputRef" v-model="editingItem.title" placeholder="请输入目录标题" />
                 </el-form-item>
                 <el-form-item label="上级目录">
-                    <el-tree-select
+                    <el-select
                       v-model="editingItem.parentId"
-                      node-key="id"
-                      :data="outline"
-                      :props="{
-                        label: 'title',
-                        value: 'id',
-                        children: 'children'
-                      }"
                       clearable
-                      check-strictly
-                      default-expand-all
-                      placeholder="请选择上级目录"
-                    />
+                      filterable
+                      placeholder="不选则为一级目录"
+                      style="width: 100%"
+                      :disabled="editingHasChildren"
+                    >
+                      <el-option
+                        v-for="opt in parentSelectOptions"
+                        :key="opt.id"
+                        :label="opt.title"
+                        :value="opt.id"
+                        :disabled="opt.id === editingItem.id"
+                      />
+                    </el-select>
+                    <div v-if="editingHasChildren" class="outline__hint">
+                      已有子目录的一级节点不能改为二级
+                    </div>
                 </el-form-item>
             </el-form>
             <template #footer>
                 <el-button @click="editDialogVisible = false">取消</el-button>
-                <el-button type="primary" @click="handleSaveEdit">确定</el-button>
+                <el-button type="primary" :loading="saving" @click="handleSaveEdit">确定</el-button>
             </template>
         </el-dialog>
     </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Back, Plus, Edit, Delete, ArrowRight, ArrowDown } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { InputInstance } from 'element-plus'
+import { Back, Plus, Edit, Delete, ArrowRight, ArrowDown, Rank } from '@element-plus/icons-vue'
+import draggable from 'vuedraggable'
+import { useDocumentStore } from '@/store/documentStore'
+
 const router = useRouter()
+const store = useDocumentStore()
 
 export interface OutlineItem {
   id: string
@@ -143,9 +248,19 @@ export interface OutlineItem {
   anchor?: string
 }
 
+interface ReorderItem {
+  id: number
+  parent_id: number | null
+  sort_order: number
+}
+
 interface Props {
   modelValue: OutlineItem[],
   showEdit?: boolean
+  /** 外部控制的当前选中节点（预览页跳转子目录时同步高亮） */
+  activeId?: string
+  /** 目录上方标题：不传时展示"目录"（预览页保持不变，编辑页可传当前文档名称） */
+  title?: string
 }
 
 interface Emits {
@@ -156,26 +271,96 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 const props = withDefaults(defineProps<Props>(), {
-  showEdit: false
+  showEdit: false,
+  activeId: '',
 })
 
-// 目录数据
-const outline = ref<OutlineItem[]>([...props.modelValue])
+function cloneOutline(items: OutlineItem[]): OutlineItem[] {
+  return items.map((item) => ({
+    ...item,
+    children: cloneOutline(item.children ?? []),
+  }))
+}
 
-// 监听外部数据变化
+function normalizeOutline(items: OutlineItem[]): OutlineItem[] {
+  return items.map((item) => ({
+    ...item,
+    children: normalizeOutline(item.children ?? []),
+  }))
+}
+
+function flattenOutline(tree: OutlineItem[]): ReorderItem[] {
+  const items: ReorderItem[] = []
+  tree.forEach((root, i) => {
+    items.push({ id: Number(root.id), parent_id: null, sort_order: i })
+    ;(root.children ?? []).forEach((child, j) => {
+      items.push({
+        id: Number(child.id),
+        parent_id: Number(root.id),
+        sort_order: j,
+      })
+    })
+  })
+  return items
+}
+
+function assertValidTwoLevelTree(tree: OutlineItem[]): boolean {
+  for (const root of tree) {
+    for (const child of root.children ?? []) {
+      if (child.children && child.children.length > 0) return false
+    }
+  }
+  return true
+}
+
+// 目录数据
+const outline = ref<OutlineItem[]>(normalizeOutline(props.modelValue))
+const saving = ref(false)
+const reordering = ref(false)
+const outlineSnapshot = ref<OutlineItem[]>([])
+const dragSignature = ref('')
+
+function hasItemId(items: OutlineItem[], id: string): boolean {
+  for (const item of items) {
+    if (item.id === id) return true
+    if (item.children && hasItemId(item.children, id)) return true
+  }
+  return false
+}
+
+// 监听外部数据变化（如 store 重新拉取树 / 排序落库后校准）
 watch(() => props.modelValue, (newVal) => {
-  console.log('newVal', newVal)
-  outline.value = [...newVal]
-  activeItemId.value = newVal[0]?.id || ''
-  // // 构建树形结构
-  // buildTree()
+  outline.value = normalizeOutline(newVal)
+  newVal.forEach((item) => {
+    if (item.children && item.children.length > 0) {
+      expandedItems.value.add(item.id)
+    }
+  })
+  if (!hasItemId(newVal, activeItemId.value)) {
+    activeItemId.value = newVal[0]?.id || ''
+  }
 }, { deep: true })
 
 // 展开的父级目录ID集合
 const expandedItems = ref<Set<string>>(new Set())
 
 // 当前激活的目录ID
-const activeItemId = ref<string>(props.modelValue[0]?.id || '')
+const activeItemId = ref<string>(props.activeId || props.modelValue[0]?.id || '')
+
+watch(
+  () => props.activeId,
+  (id) => {
+    if (!id) return
+    activeItemId.value = id
+    // 若选中的是子节点，展开其父级
+    for (const item of outline.value) {
+      if (item.children?.some((child) => child.id === id)) {
+        expandedItems.value.add(item.id)
+        break
+      }
+    }
+  },
+)
 
 // 右键菜单相关
 const contextMenuVisible = ref(false)
@@ -188,6 +373,30 @@ const currentContextChildIndex = ref(-1)
 // 编辑对话框相关
 const editDialogVisible = ref(false)
 const editingItem = ref<OutlineItem>({ id: '', title: '', parentId: undefined })
+const titleInputRef = ref<InputInstance>()
+
+/** 弹窗打开动画结束后聚焦标题输入框，并全选默认文案方便直接覆盖输入 */
+function focusTitleInput() {
+  nextTick(() => {
+    titleInputRef.value?.focus()
+    titleInputRef.value?.select()
+  })
+}
+
+/** 约定仅两级：上级目录只能选一级（根）节点 */
+const parentSelectOptions = computed(() =>
+  outline.value.map((item) => ({ id: item.id, title: item.title })),
+)
+
+/** 当前右键是否点在一级目录上（二级不可「新建目录」） */
+const contextIsRootLevel = computed(() => currentContextChildIndex.value === -1)
+
+/** 编辑中的节点若已有子节点，则必须保持为一级，不能挂到其他节点下 */
+const editingHasChildren = computed(() => {
+  if (!editingItem.value.id) return false
+  const node = outline.value.find((item) => item.id === editingItem.value.id)
+  return !!(node?.children && node.children.length > 0)
+})
 
 // 检查是否有子项
 function hasChildren(item: OutlineItem): boolean {
@@ -201,52 +410,6 @@ function toggleExpand(itemId: string) {
   } else {
     expandedItems.value.add(itemId)
   }
-}
-
-// 构建树形结构（如果目录数据是平级的，需要用此方法将扁平数据转换为树形）
-function buildTree() {
-  const flatData = [...props.modelValue]
-  const itemMap = new Map<string, OutlineItem>()
-  const rootItems: OutlineItem[] = []
-
-  // 第一遍：创建所有项的映射，保留原有的 children
-  flatData.forEach(item => {
-    itemMap.set(item.id, { ...item, children: item.children || [] })
-  })
-
-  // 第二遍：构建父子关系
-  flatData.forEach(item => {
-    const mappedItem = itemMap.get(item.id)
-    if (!mappedItem) return
-
-    if (item.parentId) {
-      const parent = itemMap.get(String(item.parentId))
-      if (parent) {
-        if (!parent.children) {
-          parent.children = []
-        }
-        // 检查是否已存在
-        if (!parent.children.find(child => child.id === mappedItem.id)) {
-          parent.children.push(mappedItem)
-        }
-      } else {
-        // 父级不存在，作为根节点
-        if (!rootItems.find(root => root.id === mappedItem.id)) {
-          rootItems.push(mappedItem)
-        }
-      }
-    } else {
-      // 没有父级，作为根节点
-      if (!rootItems.find(root => root.id === mappedItem.id)) {
-        rootItems.push(mappedItem)
-      }
-    }
-  })
-
-  // 更新 outline 为树形结构
-  outline.value = rootItems
-
-  console.log('outline', outline.value)
 }
 
 // 点击父级目录
@@ -271,8 +434,76 @@ function handleAdd() {
   editDialogVisible.value = true
 }
 
+/** 拖拽过程中禁止：有子的一级降为二级、拖进自己的子列表 */
+function checkMove(evt: {
+  to?: HTMLElement
+  draggedContext: { element: OutlineItem }
+  relatedContext: { list?: OutlineItem[] }
+}): boolean {
+  const dragged = evt.draggedContext.element
+  const toLevel = evt.to?.dataset?.level
+  const relatedList = evt.relatedContext.list
+
+  if (relatedList && dragged.children && relatedList === dragged.children) {
+    return false
+  }
+
+  if (toLevel === 'child' && hasChildren(dragged)) {
+    return false
+  }
+
+  return true
+}
+
+function onDragStart() {
+  outlineSnapshot.value = cloneOutline(outline.value)
+  dragSignature.value = JSON.stringify(flattenOutline(outline.value))
+  // 拖拽时展开全部一级，保证子列表可作为放置区
+  outline.value.forEach((item) => expandedItems.value.add(item.id))
+  closeContextMenu()
+}
+
+async function onDragEnd() {
+  const nextSignature = JSON.stringify(flattenOutline(outline.value))
+  if (nextSignature === dragSignature.value) return
+
+  if (!assertValidTwoLevelTree(outline.value)) {
+    outline.value = cloneOutline(outlineSnapshot.value)
+    ElMessage.warning('目录最多两级，已有子目录的节点不能降为二级')
+    return
+  }
+
+  // 同步本地 parentId，便于后续编辑弹窗
+  outline.value.forEach((root) => {
+    root.parentId = undefined
+    ;(root.children ?? []).forEach((child) => {
+      child.parentId = root.id
+      child.children = child.children ?? []
+    })
+  })
+
+  const items = flattenOutline(outline.value)
+  if (items.some((item) => !Number.isFinite(item.id))) {
+    outline.value = cloneOutline(outlineSnapshot.value)
+    ElMessage.error('目录数据异常，无法排序')
+    return
+  }
+
+  reordering.value = true
+  try {
+    await store.reorderOutlineNodes(items)
+    emit('update:modelValue', cloneOutline(outline.value))
+    emit('item-change', cloneOutline(outline.value))
+  } catch (error: any) {
+    outline.value = cloneOutline(outlineSnapshot.value)
+    ElMessage.error(error?.message || '排序失败，已恢复原顺序')
+  } finally {
+    reordering.value = false
+    dragSignature.value = ''
+  }
+}
+
 onMounted(() => {
-  // buildTree()
   // 默认展开所有父级
   outline.value.forEach(item => {
     if (hasChildren(item)) {
@@ -314,15 +545,18 @@ function closeContextMenu() {
   currentContextChildIndex.value = -1
 }
 
-// 新建目录
+// 新建目录：仅一级节点右键可新建其子目录
 function handleNewItem() {
-  if (!currentContextItem.value) return
-  
-  // 如果当前项是父级，新建子级；如果是子级，新建同级
+  if (!currentContextItem.value || !contextIsRootLevel.value) {
+    ElMessage.warning('仅一级目录下可新建子目录')
+    closeContextMenu()
+    return
+  }
+
   editingItem.value = {
     id: '',
     title: '新目录',
-    parentId: currentContextChildIndex.value === -1 ? currentContextItem.value.id : currentContextParent.value?.id || currentContextItem.value.id,
+    parentId: currentContextItem.value.id,
   }
   editDialogVisible.value = true
   closeContextMenu()
@@ -339,118 +573,58 @@ function handleEditItem() {
   closeContextMenu()
 }
 
-// 保存编辑
-function handleSaveEdit() {
+// 保存编辑（对接后端创建 / 更新目录节点；约定仅两级）
+async function handleSaveEdit() {
   if (!editingItem.value.title.trim()) {
+    ElMessage.warning('请输入目录标题')
     return
   }
 
-  // 如果是新建
-  if (!editingItem.value.id) {
-    const newId = `item-${Date.now()}`
-    const newItem: OutlineItem = {
-      id: newId,
-      title: editingItem.value.title,
-      parentId: editingItem.value.parentId,
-    }
+  const title = editingItem.value.title.trim()
+  let parentId = editingItem.value.parentId
 
-    if (newItem.parentId) {
-      // 添加到父级的 children
-      const parent = findItemById(outline.value, String(newItem.parentId))
-      if (parent) {
-        if (!parent.children) {
-          parent.children = []
-        }
-        parent.children.push(newItem)
-        // 展开父级
-        expandedItems.value.add(String(newItem.parentId))
-      }
+  // 上级必须是一级节点；有子节点的一级目录不能降为二级
+  if (parentId != null && parentId !== '') {
+    const parentIsRoot = outline.value.some((item) => item.id === String(parentId))
+    if (!parentIsRoot) {
+      ElMessage.warning('上级目录只能选择一级目录')
+      return
+    }
+    if (editingHasChildren.value) {
+      ElMessage.warning('已有子目录的节点不能改为二级')
+      return
+    }
+    if (editingItem.value.id && String(parentId) === String(editingItem.value.id)) {
+      ElMessage.warning('不能将自己设为上级目录')
+      return
+    }
+  } else {
+    parentId = undefined
+  }
+
+  saving.value = true
+  try {
+    if (!editingItem.value.id) {
+      await store.createOutlineNode({ title, parentId })
+      if (parentId) expandedItems.value.add(String(parentId))
+      ElMessage.success('创建成功')
     } else {
-      // 添加到根级
-      outline.value.push(newItem)
+      await store.updateOutlineNode({
+        id: editingItem.value.id,
+        title,
+        parentId,
+      })
+      if (parentId) expandedItems.value.add(String(parentId))
+      ElMessage.success('保存成功')
     }
-  } else {
-    // 更新现有项
-    const item = findItemById(outline.value, editingItem.value.id)
-    if (item) {
-      item.title = editingItem.value.title
-      const oldParentId = item.parentId
-      item.parentId = editingItem.value.parentId
 
-      // 如果父级改变，需要移动
-      if (oldParentId !== editingItem.value.parentId) {
-        moveItem(item, oldParentId, editingItem.value.parentId)
-      }
-    }
+    editDialogVisible.value = false
+    closeContextMenu()
+  } catch (error: any) {
+    ElMessage.error(error?.message || '操作失败，请稍后重试')
+  } finally {
+    saving.value = false
   }
-
-  // // 扁平化数据用于 emit
-  // const flatData = flattenTree(outline.value)
-  emit('update:modelValue', outline.value)
-  emit('item-change', outline.value)
-  editDialogVisible.value = false
-  closeContextMenu()
-}
-
-// 查找项
-function findItemById(items: OutlineItem[], id: string): OutlineItem | null {
-  for (const item of items) {
-    if (item.id === id) return item
-    if (item.children) {
-      const found = findItemById(item.children, id)
-      if (found) return found
-    }
-  }
-  return null
-}
-
-// 移动项
-function moveItem(item: OutlineItem, oldParentId: string | number | undefined, newParentId: string | number | undefined) {
-  // 从旧位置移除
-  if (oldParentId) {
-    const oldParent = findItemById(outline.value, String(oldParentId))
-    if (oldParent && oldParent.children) {
-      const index = oldParent.children.findIndex(child => child.id === item.id)
-      if (index > -1) {
-        oldParent.children.splice(index, 1)
-      }
-    }
-  } else {
-    const index = outline.value.findIndex(root => root.id === item.id)
-    if (index > -1) {
-      outline.value.splice(index, 1)
-    }
-  }
-
-  // 添加到新位置
-  if (newParentId) {
-    const newParent = findItemById(outline.value, String(newParentId))
-    if (newParent) {
-      if (!newParent.children) {
-        newParent.children = []
-      }
-      newParent.children.push(item)
-      expandedItems.value.add(String(newParentId))
-    }
-  } else {
-    outline.value.push(item)
-  }
-}
-
-// 扁平化树形数据
-function flattenTree(items: OutlineItem[]): OutlineItem[] {
-  const result: OutlineItem[] = []
-  function traverse(items: OutlineItem[]) {
-    items.forEach(item => {
-      const { children, ...itemWithoutChildren } = item
-      result.push(itemWithoutChildren)
-      if (children && children.length > 0) {
-        traverse(children)
-      }
-    })
-  }
-  traverse(items)
-  return result
 }
 
 // 关闭编辑对话框
@@ -459,40 +633,33 @@ function handleEditDialogClose() {
   editingItem.value = { id: '', title: '', parentId: undefined }
 }
 
-// 删除目录
-function handleDeleteItem() {
+// 删除目录（对接后端，子节点由外键级联删除）
+async function handleDeleteItem() {
   if (!currentContextItem.value) return
-  
+
   const itemId = currentContextItem.value.id
-  const isChild = currentContextChildIndex.value !== -1
-
-  if (isChild && currentContextParent.value) {
-    // 删除子级
-    if (currentContextParent.value.children) {
-      const index = currentContextParent.value.children.findIndex(child => child.id === itemId)
-      if (index > -1) {
-        currentContextParent.value.children.splice(index, 1)
-      }
-    }
-  } else {
-    // 删除父级（同时删除所有子级）
-    const index = outline.value.findIndex(item => item.id === itemId)
-    if (index > -1) {
-      outline.value.splice(index, 1)
-    }
-  }
-
-  // 如果删除的是当前激活项，重置激活ID
-  if (activeItemId.value === itemId) {
-    activeItemId.value = ''
-  }
-
-  // // 扁平化数据用于 emit
-  // const flatData = flattenTree(outline.value)
-  emit('update:modelValue', outline.value)
-  emit('item-change', outline.value)
-  
+  const title = currentContextItem.value.title
   closeContextMenu()
+
+  try {
+    await ElMessageBox.confirm(
+      `确定删除目录「${title}」吗？其下子目录也会一并删除。`,
+      '提示',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' },
+    )
+  } catch {
+    return
+  }
+
+  try {
+    await store.removeOutlineNode(itemId)
+    if (activeItemId.value === itemId) {
+      activeItemId.value = ''
+    }
+    ElMessage.success('删除成功')
+  } catch (error: any) {
+    ElMessage.error(error?.message || '删除失败，请稍后重试')
+  }
 }
 
 // 点击其他地方关闭右键菜单
@@ -518,124 +685,207 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-// 与系统主色 / 文档列表保持一致的简洁目录
+/*
+  Notion / Linear 目录侧栏
+  选中：圆角底填充 + 字重，不用左侧色条
+*/
 .outline {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --fg: #111111;
+  --muted: #6b6b6b;
+  --faint: #9b9b9b;
+  --line: #e8e8e5;
+  --hover: #efefed;
+  --active: #e8eee7;
+  --accent: #5a9e58;
+  --danger: #b91c1c;
+  --radius: 6px;
+  --ease: 160ms ease;
+
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", ui-sans-serif, system-ui,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
 
   &__header {
-    height: 40px;
-    padding: 2px 8px;
-    border-bottom: 1px solid #e9ecef;
+    height: 48px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--line);
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
+    background: var(--bg);
+  }
 
-    &_left {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+  &__header_left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
 
-      .return-btn {
-        width: 28px;
-        height: 28px;
-        border: 1px solid #e1e4e8;
-        color: #6a737d;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        background: transparent;
-        transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  &__back,
+  &__add {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background-color var(--ease), color var(--ease);
 
-        &:hover {
-          border-color: var(--el-color-primary);
-          color: var(--el-color-primary);
-          background-color: var(--el-color-primary-light-9);
-        }
-      }
+    &:hover {
+      background: var(--hover);
+      color: var(--fg);
     }
+
+    &:focus-visible {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
+    }
+  }
+
+  &__add:hover {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
   }
 
   &__title {
     margin: 0;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
-    color: #212529;
     letter-spacing: -0.01em;
+    color: var(--fg);
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__hint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
   }
 
   &__content {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 4px;
+    padding: 8px 8px 16px;
   }
 
   &__nav {
     display: flex;
     flex-direction: column;
+    gap: 1px;
+  }
+
+  &__draggable {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-height: 4px;
   }
 
   &__group {
     display: flex;
     flex-direction: column;
+    gap: 1px;
   }
 
   &__item {
-    position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
+    gap: 6px;
+    min-height: 32px;
+    padding: 5px 8px;
+    border: none;
+    border-radius: var(--radius);
+    background: transparent;
     cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-    border-left: 3px solid transparent;
-    min-height: 34px;
     box-sizing: border-box;
-    border-radius: 4px;
+    touch-action: manipulation;
+    transition: background-color var(--ease), color var(--ease);
 
     &:hover {
-      background-color: #f6f8fa;
+      background: var(--hover);
 
-      .outline__item-icon {
-        color: var(--el-color-primary);
+      .outline__drag-handle {
+        opacity: 1;
       }
     }
 
+    &:active {
+      background: color-mix(in srgb, var(--accent) 10%, var(--hover));
+    }
+
+    /* 选中：整行浅底，不用左侧色条 */
     &--active {
-      background-color: var(--el-color-primary-light-9);
-      border-left-color: var(--el-color-primary);
+      background: var(--active);
 
       .outline__item-text {
-        color: var(--el-color-primary);
+        color: var(--fg);
         font-weight: 600;
       }
 
       .outline__item-icon {
-        color: var(--el-color-primary);
+        color: var(--accent);
+      }
+
+      &:hover {
+        background: color-mix(in srgb, var(--accent) 16%, #fff);
       }
     }
 
     &--parent {
-      font-weight: 500;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     &--child {
       font-size: 13px;
-      font-weight: 400;
+      padding-left: 8px;
+      margin-left: 14px;
     }
 
-    &--expanded {
-      .outline__item-icon {
-        color: var(--el-color-primary);
-      }
+    &--expanded .outline__item-icon {
+      color: var(--muted);
+    }
+  }
+
+  &__drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-left: -2px;
+    color: var(--faint);
+    opacity: 0.35;
+    cursor: grab;
+    border-radius: 4px;
+    transition: opacity var(--ease), color var(--ease), background-color var(--ease);
+
+    &:hover {
+      opacity: 1;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--fg) 6%, transparent);
+    }
+
+    &:active {
+      cursor: grabbing;
     }
   }
 
@@ -643,84 +893,128 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
-    color: #6a737d;
-    transition: color 0.2s ease;
+    border-radius: 4px;
+    color: var(--faint);
+    transition: color var(--ease), background-color var(--ease);
     cursor: pointer;
 
     &:hover {
-      color: var(--el-color-primary);
+      color: var(--fg);
+      background: color-mix(in srgb, var(--fg) 6%, transparent);
     }
 
     .el-icon {
-      font-size: 14px;
+      font-size: 12px;
     }
   }
 
   &__item-icon-placeholder {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
   }
 
   &__item-text {
-    color: #24292e;
+    color: var(--fg);
     font-size: inherit;
-    line-height: 1.5;
+    font-weight: 450;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
     flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
+  &__item--child .outline__item-text {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  &__item--child.outline__item--active .outline__item-text {
+    color: var(--fg);
+    font-weight: 600;
+  }
+
   &__children {
     display: flex;
     flex-direction: column;
-    background-color: #fafbfc;
-    border-radius: 4px;
-    margin: 2px 0 4px;
+    gap: 1px;
+    padding: 1px 0 4px;
+    min-height: 8px;
+
+    &--collapsed {
+      display: none;
+    }
   }
+}
+
+.outline__ghost {
+  opacity: 0.45;
+  background: color-mix(in srgb, var(--accent, #5a9e58) 12%, #fff) !important;
+}
+
+.outline__chosen {
+  background: var(--hover, #efefed);
+}
+
+.outline__drag {
+  opacity: 0.92;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
 .context-menu {
   position: fixed;
   z-index: 9999;
-  background-color: #ffffff;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 4px 0;
-  min-width: 140px;
+  background: var(--surface, #fff);
+  border: 1px solid #e8e8e5;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+  min-width: 148px;
   overflow: hidden;
 
   &__item {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px;
+    padding: 8px 10px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 13px;
-    color: #24292e;
-    transition: background-color 0.2s ease;
+    color: #111;
+    transition: background-color 160ms ease;
 
     &:hover {
-      background-color: #f6f8fa;
+      background: #efefed;
     }
 
     &--danger {
-      color: #f56c6c;
+      color: #b91c1c;
 
       &:hover {
-        background-color: #fef0f0;
+        background: #fef2f2;
       }
     }
 
     .el-icon {
-      font-size: 16px;
+      font-size: 15px;
     }
   }
 }
-</style>
 
+@media (prefers-reduced-motion: reduce) {
+  .outline__back,
+  .outline__add,
+  .outline__item,
+  .outline__item-icon,
+  .outline__drag-handle,
+  .context-menu__item {
+    transition: none;
+  }
+}
+</style>

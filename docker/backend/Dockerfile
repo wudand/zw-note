@@ -29,7 +29,8 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/bin/server   ./server
 COPY zw-note-backend/configs/         ./configs/
 
-RUN chown -R appuser:appgroup /app
+# 预先创建上传目录，便于挂载持久化卷时继承 appuser 权限（见 docker-compose.yml）
+RUN mkdir -p /app/uploads && chown -R appuser:appgroup /app
 USER appuser
 
 EXPOSE 8080

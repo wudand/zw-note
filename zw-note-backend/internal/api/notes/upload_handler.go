@@ -1,4 +1,4 @@
-package admin
+package notes
 
 import (
 	"errors"
@@ -11,7 +11,10 @@ import (
 	"go.uber.org/zap"
 )
 
-// UploadHandler handles file uploads (admin only).
+// UploadHandler handles image uploads used by the Markdown editor's "insert
+// image" toolbar action. It reuses the same local-disk storage as the admin
+// upload endpoint (see pkg/upload); files are served back via the "/uploads"
+// static route registered in bootstrap/router.go.
 type UploadHandler struct {
 	cfg config.UploadConfig
 	log *zap.Logger
@@ -22,15 +25,19 @@ func NewUploadHandler(cfg config.UploadConfig, log *zap.Logger) *UploadHandler {
 }
 
 // UploadImage godoc
-// @Summary  Upload an image
-// @Tags     admin-upload
-// @Security BearerAuth
+// @Summary  Upload an image for use in note content
+// @Tags     notes-upload
 // @Accept   multipart/form-data
 // @Produce  json
 // @Param    file formData file true "Image file (jpg/png/webp/gif)"
 // @Success  200  {object} utils.Response{data=object}
-// @Router   /api/admin/v1/upload/image [post]
+// @Router   /api/notes/v1/upload/image [post]
 func (h *UploadHandler) UploadImage(c *gin.Context) {
+	if _, ok := getNotesUserID(c); !ok {
+		utils.Unauthorized(c)
+		return
+	}
+
 	file, err := c.FormFile("file")
 	if err != nil {
 		utils.ParamError(c, "missing or invalid file")
@@ -49,6 +56,9 @@ func (h *UploadHandler) UploadImage(c *gin.Context) {
 		return
 	}
 
-	h.log.Info("image uploaded", zap.String("path", relPath))
-	utils.Success(c, gin.H{"path": relPath})
+	h.log.Info("note image uploaded", zap.String("path", relPath))
+	utils.Success(c, gin.H{
+		"path": relPath,
+		"url":  "/uploads/" + relPath,
+	})
 }

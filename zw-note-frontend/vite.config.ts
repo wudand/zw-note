@@ -16,9 +16,13 @@ export default defineConfig({
     open: false,
     proxy: {
       '/api': {
-        target: 'http://192.168.1.100:55559',
+        target: 'http://127.0.0.1:8004',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      // 图片等本地上传文件，由后端 /uploads 静态路由提供
+      '/uploads': {
+        target: 'http://127.0.0.1:8004',
+        changeOrigin: true,
       },
     },
   }

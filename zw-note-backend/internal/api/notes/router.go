@@ -24,7 +24,9 @@ import (
 //	DELETE /outlines/:outlineId                – delete outline node
 //	GET    /outlines/:outlineId/content        – get outline content
 //	PUT    /outlines/:outlineId/content        – save outline content
-func RegisterRoutes(r *gin.Engine, docHandler *DocumentHandler, outlineHandler *OutlineHandler, contentHandler *ContentHandler, defaultUserID uint64) {
+//
+//	POST   /upload/image                       – upload an image for note content
+func RegisterRoutes(r *gin.Engine, docHandler *DocumentHandler, outlineHandler *OutlineHandler, contentHandler *ContentHandler, uploadHandler *UploadHandler, defaultUserID uint64) {
 	v1 := r.Group("/api/notes/v1")
 	v1.Use(middleware.NotesAuth(defaultUserID))
 
@@ -43,4 +45,6 @@ func RegisterRoutes(r *gin.Engine, docHandler *DocumentHandler, outlineHandler *
 	outlines.DELETE("/:outlineId", outlineHandler.Delete)
 	outlines.GET("/:outlineId/content", contentHandler.Get)
 	outlines.PUT("/:outlineId/content", contentHandler.Update)
+
+	v1.POST("/upload/image", uploadHandler.UploadImage)
 }
