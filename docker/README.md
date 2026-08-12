@@ -83,27 +83,33 @@ push 到 `main` 分支时会自动：
 
 1. 构建 backend / frontend 镜像并推送到 Docker Hub
    （`wudande/zw-note-backend`、`wudande/zw-note-frontend`）；
-2. SSH 登录服务器，`git pull` 同步最新的 `docker-compose.yml` 等文件，
-   再 `docker compose pull && docker compose up -d` 完成滚动更新。
+2. 把仓库里的 `docker/docker-compose.yml` 直接 SCP 传到服务器（每次覆盖更新）；
+3. SSH 登录服务器，`docker compose pull && docker compose up -d` 完成滚动更新。
 
-服务器端需提前准备好：
+**服务器上不需要 `git clone` 整个仓库**，只需要一个普通目录，里面放两个文件：
+`docker-compose.yml`（由 CI 每次自动传输更新）和 `.env`（手动维护，CI 不会碰它）。
 
-- 仓库已 `git clone` 到某个目录（如 `/opt/zw-note`），且该目录下执行过
-  `cp docker/.env.example docker/.env` 并填好数据库连接参数；
-- 部署脚本会用 workflow 里的 `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` 自动
-  在服务器上执行一次 `docker login`，服务器本身无需单独配置账号。
+服务器端首次部署前需提前准备好：
+
+- 建好一个目标目录（如 `/root/wudan/zw-note-deploy`），在该目录下执行
+  一次 `.env` 初始化（可以先从本地 `docker/.env.example` 复制内容手动创建，
+  或临时用 `scp` 传一份上去）并按需修改数据库连接参数；
+- `wudande/zw-note-backend`、`wudande/zw-note-frontend` 保持 **public**，
+  部署脚本里没有 `docker login`，直接 `docker compose pull` 拉公开镜像；
+  若改成 private，需要在部署脚本里加回 `docker login`（用
+  `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`）。
 
 需要在仓库 **Settings → Secrets and variables → Actions** 里配置：
 
 | Secret               | 说明                                        |
 |----------------------|---------------------------------------------|
-| `DOCKERHUB_USERNAME` | Docker Hub 用户名（`wudande`）              |
+| `DOCKERHUB_USERNAME` | Docker Hub 用户名（`wudande`），构建推送镜像时登录用 |
 | `DOCKERHUB_TOKEN`    | Docker Hub Access Token（Account Settings → Security → New Access Token，权限选 Read & Write） |
 | `SSH_HOST`           | 服务器地址                                  |
 | `SSH_USER`           | SSH 登录用户名                              |
 | `SSH_PRIVATE_KEY`    | SSH 私钥（PEM 全文）                        |
 | `SSH_PORT`           | SSH 端口，可不填（默认 22）                 |
-| `DEPLOY_PATH`        | 服务器上仓库所在目录（第 1 步克隆的路径）   |
+| `DEPLOY_PATH`        | 服务器上一个普通目录的绝对路径（如 `/root/wudan/zw-note-deploy`），不需要是 git 仓库 |
 
 `docker-compose.yml` 里 backend / frontend 服务同时保留了 `image:` 和
 `build:`：本机 `up -d --build` 走本地构建，服务器上不带 `--build` 的

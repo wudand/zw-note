@@ -63,30 +63,44 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
       # 需要在仓库 Settings → Secrets and variables → Actions 里配置：
-      #   DOCKERHUB_USERNAME  Docker Hub 用户名
-      #   DOCKERHUB_TOKEN     Docker Hub Access Token（Docker Hub → Account Settings → Security）
       #   SSH_HOST            服务器地址
       #   SSH_USER            SSH 登录用户名
       #   SSH_PRIVATE_KEY     SSH 私钥（PEM 格式全文）
       #   SSH_PORT            SSH 端口（可选，默认 22）
-      #   DEPLOY_PATH         服务器上仓库所在目录（已 clone 好，且已配置 docker/.env）
-      - name: SSH deploy
-        uses: appleboy/ssh-action@v1.2.5
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      #   DEPLOY_PATH         服务器上一个普通目录的绝对路径（如 /root/wudan/zw-note-deploy），
+      #                       不需要 git clone，首次部署前只需手动在该目录下放好 .env
+      #                       （从 docker/.env.example 复制并按需修改）
+      #
+      # 不依赖服务器上有 git 仓库：docker-compose.yml 由本步骤直接从 CI 传过去，
+      # 每次部署都会覆盖更新；.env 不在传输范围内，不会被覆盖。
+      - name: Copy docker-compose.yml to server
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN
+          source: "docker/docker-compose.yml"
+          target: ${{ secrets.DEPLOY_PATH }}
+          strip_components: 1
+          overwrite: true
+
+      # 注意：wudande/zw-note-backend、wudande/zw-note-frontend 需保持 public，
+      # 否则 docker compose pull 会因未登录而拉取失败，需要重新加回 docker login 步骤。
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             set -e
-            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             cd "${{ secrets.DEPLOY_PATH }}"
-            git pull --ff-only
-            docker compose -f docker/docker-compose.yml pull
-            docker compose -f docker/docker-compose.yml up -d
+            docker compose pull
+            docker compose up -d
             docker image prune -f
