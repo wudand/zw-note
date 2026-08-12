@@ -18,7 +18,7 @@
             </button>
         </div>
         <div class="outline__content">
-            <nav class="outline__nav">
+            <nav class="outline__nav" ref="navRef">
               <!-- 预览：只读列表 -->
               <template v-if="!props.showEdit">
                 <div
@@ -78,6 +78,7 @@
                 :disabled="reordering"
                 :delay="150"
                 :delay-on-touch-only="true"
+                :force-fallback="true"
                 handle=".outline__drag-handle"
                 ghost-class="outline__ghost"
                 chosen-class="outline__chosen"
@@ -124,11 +125,12 @@
                       group="outline"
                       data-level="child"
                       class="outline__draggable outline__draggable--child outline__children"
-                      :class="{ 'outline__children--collapsed': !expandedItems.has(element.id) }"
+                      :class="{ 'outline__children--collapsed': !isDragging && (!hasChildren(element) || !expandedItems.has(element.id)) }"
                       :animation="180"
                       :disabled="reordering"
                       :delay="150"
                       :delay-on-touch-only="true"
+                      :force-fallback="true"
                       handle=".outline__drag-handle"
                       ghost-class="outline__ghost"
                       chosen-class="outline__chosen"
@@ -319,6 +321,35 @@ const saving = ref(false)
 const reordering = ref(false)
 const outlineSnapshot = ref<OutlineItem[]>([])
 const dragSignature = ref('')
+/** 是否正处于拖拽中：拖拽期间即使子列表为空也要显示出来充当放置区，
+ * 但不写入 expandedItems，避免污染持久的展开状态（历史上出现过污染后
+ * 无法清理、导致某个空目录之后一直露出占位空白的问题） */
+const isDragging = ref(false)
+const navRef = ref<HTMLElement>()
+
+/**
+ * 跨一级/二级列表拖拽时，SortableJS 会直接操作 DOM 添加 ghost/chosen/drag 样式类；
+ * 元素在两个独立的 Sortable 实例间搬运后，个别情况下这些类不会被正常移除
+ * （表现为拖过的项残留浅绿色 ghost 背景、看起来"间隔变宽"）。拖拽结束后统一清一遍作为兜底。
+ */
+function cleanupDragArtifacts() {
+  nextTick(() => {
+    const root = navRef.value
+    if (!root) return
+    const staleClasses = [
+      'outline__ghost',
+      'outline__chosen',
+      'outline__drag',
+      'sortable-ghost',
+      'sortable-chosen',
+      'sortable-drag',
+      'sortable-fallback',
+    ]
+    root.querySelectorAll(`.${staleClasses.join(', .')}`).forEach((el) => {
+      el.classList.remove(...staleClasses)
+    })
+  })
+}
 
 function hasItemId(items: OutlineItem[], id: string): boolean {
   for (const item of items) {
@@ -458,17 +489,30 @@ function checkMove(evt: {
 function onDragStart() {
   outlineSnapshot.value = cloneOutline(outline.value)
   dragSignature.value = JSON.stringify(flattenOutline(outline.value))
-  // 拖拽时展开全部一级，保证子列表可作为放置区
-  outline.value.forEach((item) => expandedItems.value.add(item.id))
+  // 拖拽期间让空子列表也显示出来充当放置区（仅样式层面，不写 expandedItems）
+  isDragging.value = true
   closeContextMenu()
 }
 
+/** 一级节点拿到子节点后自动标记为展开，方便用户立刻看到刚拖进去的项 */
+function autoExpandParents() {
+  outline.value.forEach((item) => {
+    if (hasChildren(item)) expandedItems.value.add(item.id)
+  })
+}
+
 async function onDragEnd() {
+  isDragging.value = false
+
   const nextSignature = JSON.stringify(flattenOutline(outline.value))
-  if (nextSignature === dragSignature.value) return
+  if (nextSignature === dragSignature.value) {
+    cleanupDragArtifacts()
+    return
+  }
 
   if (!assertValidTwoLevelTree(outline.value)) {
     outline.value = cloneOutline(outlineSnapshot.value)
+    cleanupDragArtifacts()
     ElMessage.warning('目录最多两级，已有子目录的节点不能降为二级')
     return
   }
@@ -481,10 +525,12 @@ async function onDragEnd() {
       child.children = child.children ?? []
     })
   })
+  autoExpandParents()
 
   const items = flattenOutline(outline.value)
   if (items.some((item) => !Number.isFinite(item.id))) {
     outline.value = cloneOutline(outlineSnapshot.value)
+    cleanupDragArtifacts()
     ElMessage.error('目录数据异常，无法排序')
     return
   }
@@ -498,6 +544,7 @@ async function onDragEnd() {
     outline.value = cloneOutline(outlineSnapshot.value)
     ElMessage.error(error?.message || '排序失败，已恢复原顺序')
   } finally {
+    cleanupDragArtifacts()
     reordering.value = false
     dragSignature.value = ''
   }
