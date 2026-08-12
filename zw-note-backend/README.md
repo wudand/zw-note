@@ -109,7 +109,7 @@ Docker 相关文件统一放在仓库根目录 `docker/`（见 `docker/README.md
 ```bash
 make build                # native binary → bin/zw-note-backend
 make docker-build         # 构建后端镜像
-make docker-run           # 启动后端容器 :8080
+make docker-run           # 启动后端容器 :8006
 ```
 
 或在仓库根目录：

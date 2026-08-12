@@ -1,2 +1,5 @@
 # 本地 make start 产生的 pid / 日志
 .run/
+
+# docker-compose 数据库连接参数（含密码），保留 docker/.env.example 作为模板
+docker/.env

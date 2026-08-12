@@ -1,10 +1,16 @@
 # 在仓库根目录 notes/ 下执行，或指定本文件：
 #   docker compose -f docker/docker-compose.yml up -d --build
 #
-# 默认连接本机已有 PostgreSQL（见 zw-note-backend/configs/config.yaml）。
-# 临时起独立库：
+# 数据库连接参数（DB_USER / DB_PASSWORD / DB_HOST / DB_PORT / DB_NAME）通过
+# docker/.env 注入（变量插值），首次使用需先执行：
+#   cp docker/.env.example docker/.env   # 再按需修改
+#
+# 默认通过 host.docker.internal:5432 连接宿主机上已有的 postgres-dev 容器
+# （容器需以 -p 5432:5432 发布端口；用户/密码/库名需与 docker/.env 一致，
+# 见 zw-note-backend/scripts/db.sh 的默认值 hsop / P0stgre2022 / zw-note）。
+# 临时起独立库（注意：会占用 5432 端口，需先确认 postgres-dev 未占用该端口）：
 #   docker compose -f docker/docker-compose.yml --profile local-db up -d
-
+name: zw-note
 services:
   backend:
     build:
@@ -13,10 +19,14 @@ services:
     container_name: zw-note-backend
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8006:8080"
     environment:
-      # host.docker.internal 便于容器访问宿主机上的 Postgres
-      APP_DATABASE_DSN: "postgres://hsop:P0stgre2022@host.docker.internal:5432/zw-note?sslmode=disable"
+      # config.yaml 默认 server.port 是本地开发用的 8004，容器里必须改成
+      # 和下面 ports 映射一致的 8080，否则宿主机 8080 连不到容器内进程
+      APP_SERVER_PORT: "8080"
+      APP_SERVER_MODE: "release"
+      # 各字段取自 docker/.env（变量插值），host.docker.internal 便于容器访问宿主机上的 Postgres
+      APP_DATABASE_DSN: "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -30,7 +40,7 @@ services:
     container_name: zw-note-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8005:80"
     depends_on:
       - backend
 
@@ -42,14 +52,14 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: hsop
-      POSTGRES_PASSWORD: P0stgre2022
-      POSTGRES_DB: zw-note
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - ../zw-note-backend/scripts/migrations:/docker-entrypoint-initdb.d
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hsop -d zw-note"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 3s
       timeout: 5s
       retries: 10

@@ -5,16 +5,19 @@
 **/.vscode
 **/.idea
 
+# 含数据库密码等敏感信息，构建镜像不需要，避免混进 build context
+docker/.env
+
 # 前端
-zw-note/node_modules
-zw-note/dist
-zw-note/.env
-zw-note/.env.*
-zw-note/*.log
-zw-note/README.md
-zw-note/README.en.md
+zw-note-frontend/node_modules
+zw-note-frontend/dist
+zw-note-frontend/*.log
+zw-note-frontend/README.md
+zw-note-frontend/README.en.md
 
 # 后端
 zw-note-backend/bin
 zw-note-backend/**/*.md
-zw-note-backend/docs
+# 注意：zw-note-backend/docs 是 swag 生成的 Go 包（docs.go），
+# 被 bootstrap/router.go 以 `_ "zw-note-backend/docs"` 方式引入用于挂载
+# Swagger UI，是编译期依赖，不能加入 ignore，否则会导致镜像构建失败

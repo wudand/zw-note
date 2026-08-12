@@ -1,6 +1,12 @@
 # ── Build stage ──────────────────────────────────────────────────────────────
 # build context: 仓库根目录 notes/
-FROM golang:1.24-alpine AS builder
+FROM golang:1.25-alpine AS builder
+
+# BuildKit 会自动按最终目标平台注入 TARGETOS/TARGETARCH；不要写死 amd64，
+# 否则在 arm64 宿主机（如 Apple Silicon）上会构建出与运行时架构不匹配的二进制，
+# 容器启动时报 "exec format error"
+ARG TARGETOS=linux
+ARG TARGETARCH
 
 WORKDIR /app
 
@@ -11,7 +17,7 @@ RUN go mod download
 
 COPY zw-note-backend/ .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -ldflags="-s -w -X main.Version=$(git describe --tags --always --dirty 2>/dev/null || echo dev)" \
     -o /app/bin/server ./cmd/server/main.go
 

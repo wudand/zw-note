@@ -4,10 +4,10 @@ FROM node:22.20.0 AS builder
 
 WORKDIR /app
 
-COPY zw-note/package*.json ./
+COPY zw-note-frontend/package*.json ./
 RUN npm ci
 
-COPY zw-note/ .
+COPY zw-note-frontend/ .
 RUN npm run build
 
 

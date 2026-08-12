@@ -140,9 +140,9 @@ docker-status:
 	@echo "========== docker status =========="
 	@$(COMPOSE) ps || true
 	@echo ""
-	@echo "  Frontend : http://localhost"
-	@echo "  Backend  : http://localhost:8080"
-	@echo "  Swagger  : http://localhost:8080/swagger/index.html"
+	@echo "  Frontend : http://localhost:8005"
+	@echo "  Backend  : http://localhost:8006"
+	@echo "  Swagger  : http://localhost:8006/swagger/index.html"
 	@echo "==================================="
 	@echo ""
 
