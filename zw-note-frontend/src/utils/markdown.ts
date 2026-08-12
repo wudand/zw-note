@@ -1,7 +1,79 @@
-function escapeHtml(text: string): string {
-  const div = document.createElement('div')
-  div.textContent = text
-  return div.innerHTML
+import hljs from 'highlight.js/lib/core'
+import bash from 'highlight.js/lib/languages/bash'
+import c from 'highlight.js/lib/languages/c'
+import cpp from 'highlight.js/lib/languages/cpp'
+import csharp from 'highlight.js/lib/languages/csharp'
+import css from 'highlight.js/lib/languages/css'
+import diff from 'highlight.js/lib/languages/diff'
+import dockerfile from 'highlight.js/lib/languages/dockerfile'
+import go from 'highlight.js/lib/languages/go'
+import ini from 'highlight.js/lib/languages/ini'
+import java from 'highlight.js/lib/languages/java'
+import javascript from 'highlight.js/lib/languages/javascript'
+import json from 'highlight.js/lib/languages/json'
+import kotlin from 'highlight.js/lib/languages/kotlin'
+import less from 'highlight.js/lib/languages/less'
+import markdownLang from 'highlight.js/lib/languages/markdown'
+import php from 'highlight.js/lib/languages/php'
+import plaintext from 'highlight.js/lib/languages/plaintext'
+import python from 'highlight.js/lib/languages/python'
+import ruby from 'highlight.js/lib/languages/ruby'
+import rust from 'highlight.js/lib/languages/rust'
+import scss from 'highlight.js/lib/languages/scss'
+import sql from 'highlight.js/lib/languages/sql'
+import swift from 'highlight.js/lib/languages/swift'
+import typescript from 'highlight.js/lib/languages/typescript'
+import xml from 'highlight.js/lib/languages/xml'
+import yaml from 'highlight.js/lib/languages/yaml'
+
+// 只按需注册笔记场景常见的语言，而不是引入 highlight.js 全量 190+ 语言包，减小构建体积
+hljs.registerLanguage('bash', bash)
+hljs.registerLanguage('c', c)
+hljs.registerLanguage('cpp', cpp)
+hljs.registerLanguage('csharp', csharp)
+hljs.registerLanguage('css', css)
+hljs.registerLanguage('diff', diff)
+hljs.registerLanguage('dockerfile', dockerfile)
+hljs.registerLanguage('go', go)
+hljs.registerLanguage('ini', ini)
+hljs.registerLanguage('java', java)
+hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage('json', json)
+hljs.registerLanguage('kotlin', kotlin)
+hljs.registerLanguage('less', less)
+hljs.registerLanguage('markdown', markdownLang)
+hljs.registerLanguage('php', php)
+hljs.registerLanguage('plaintext', plaintext)
+hljs.registerLanguage('python', python)
+hljs.registerLanguage('ruby', ruby)
+hljs.registerLanguage('rust', rust)
+hljs.registerLanguage('scss', scss)
+hljs.registerLanguage('sql', sql)
+hljs.registerLanguage('swift', swift)
+hljs.registerLanguage('typescript', typescript)
+hljs.registerLanguage('xml', xml)
+hljs.registerLanguage('yaml', yaml)
+
+/** 从 ```lang\ncode\n``` 中拆出语言标识（可为空）与代码内容 */
+function parseCodeBlock(raw: string): { lang: string; code: string } {
+  const match = raw.match(/^```([^\n`]*)\n?([\s\S]*?)```$/)
+  const lang = (match?.[1] ?? '').trim().toLowerCase()
+  const code = (match?.[2] ?? '').trim()
+  return { lang, code }
+}
+
+/**
+ * 高亮一段代码：优先按用户标注的语言（```js 之类）高亮；
+ * 未标注或标注了未注册的语言时，用 highlightAuto 在已注册语言范围内猜测。
+ * 返回值 html 已经是转义并带 `hljs-*` 样式类的安全 HTML，可直接用于 v-html。
+ */
+function highlightCode(lang: string, code: string): { html: string; lang: string } {
+  if (!code) return { html: '', lang: lang || 'plaintext' }
+  if (lang && hljs.getLanguage(lang)) {
+    return { html: hljs.highlight(code, { language: lang }).value, lang }
+  }
+  const auto = hljs.highlightAuto(code)
+  return { html: auto.value, lang: auto.language ?? 'plaintext' }
 }
 
 function splitTableRow(line: string): string[] {
@@ -297,10 +369,11 @@ export function renderMarkdown(markdown: string): string {
   html = html.replace(/{{ALIGN-CLOSE}}/g, '</div>')
 
   codeBlocks.forEach((codeBlock, index) => {
-    const code = codeBlock.replace(/```[\w]*\n?/g, '').replace(/```/g, '').trim()
+    const { lang, code } = parseCodeBlock(codeBlock)
+    const { html: highlighted, lang: resolvedLang } = highlightCode(lang, code)
     html = html.replace(
       `{{MARKDOWN-CODE-BLOCK-${index}}}`,
-      `<pre><code>${escapeHtml(code)}</code></pre>`,
+      `<pre><code class="hljs language-${resolvedLang}">${highlighted}</code></pre>`,
     )
   })
 

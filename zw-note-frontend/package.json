@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "highlight.js": "^11.12.0",
     "mockjs": "^1.1.0",
     "openai": "^6.9.1",
     "pinia": "^4.0.2",
