@@ -33,7 +33,7 @@ Thumbs.db
 vendor/
 
 # Swagger generated docs (run make swagger to regenerate)
-docs/
+# docs/
 
 # Cursor / uploads
 .cursor/

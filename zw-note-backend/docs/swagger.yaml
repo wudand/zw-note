@@ -1,0 +1,2520 @@
+basePath: /
+definitions:
+  zw-note-backend_internal_dto.AddressListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.AddressResponse'
+        type: array
+    type: object
+  zw-note-backend_internal_dto.AddressResponse:
+    properties:
+      city:
+        type: string
+      created_at:
+        type: string
+      detail:
+        type: string
+      district:
+        type: string
+      id:
+        type: integer
+      is_default:
+        type: boolean
+      mp_user_id:
+        type: integer
+      phone:
+        type: string
+      province:
+        type: string
+      receiver:
+        type: string
+      tag:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.AdminLoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  zw-note-backend_internal_dto.AdminLoginResponse:
+    properties:
+      expire_at:
+        type: integer
+      role:
+        type: string
+      token:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.AdminUserListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.AdminUserResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  zw-note-backend_internal_dto.AdminUserResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      role:
+        type: string
+      status:
+        type: integer
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.CarouselListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CarouselResponse'
+        type: array
+    type: object
+  zw-note-backend_internal_dto.CarouselResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      link:
+        type: string
+      sort_order:
+        type: integer
+      status:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.CategoryListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CategoryResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  zw-note-backend_internal_dto.CategoryResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      sort_order:
+        type: integer
+      status:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.CouponListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CouponResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  zw-note-backend_internal_dto.CouponResponse:
+    properties:
+      created_at:
+        type: string
+      discount_value:
+        description: 分
+        type: integer
+      id:
+        type: integer
+      min_amount:
+        description: 分
+        type: integer
+      name:
+        type: string
+      stackable:
+        type: boolean
+      status:
+        type: integer
+      type:
+        type: string
+      updated_at:
+        type: string
+      valid_days:
+        type: integer
+    type: object
+  zw-note-backend_internal_dto.CreateAddressRequest:
+    properties:
+      city:
+        maxLength: 50
+        type: string
+      detail:
+        maxLength: 255
+        type: string
+      district:
+        maxLength: 50
+        type: string
+      phone:
+        maxLength: 20
+        type: string
+      province:
+        maxLength: 50
+        type: string
+      receiver:
+        maxLength: 50
+        type: string
+      tag:
+        maxLength: 20
+        type: string
+    required:
+    - city
+    - detail
+    - district
+    - phone
+    - province
+    - receiver
+    type: object
+  zw-note-backend_internal_dto.CreateAdminUserRequest:
+    properties:
+      password:
+        maxLength: 100
+        minLength: 6
+        type: string
+      role:
+        enum:
+        - super_admin
+        - admin
+        - viewer
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - password
+    - role
+    - username
+    type: object
+  zw-note-backend_internal_dto.CreateCarouselRequest:
+    properties:
+      image_url:
+        maxLength: 500
+        type: string
+      link:
+        maxLength: 500
+        type: string
+      sort_order:
+        minimum: 0
+        type: integer
+      title:
+        maxLength: 100
+        type: string
+    required:
+    - image_url
+    type: object
+  zw-note-backend_internal_dto.CreateCategoryRequest:
+    properties:
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      sort_order:
+        type: integer
+    required:
+    - name
+    type: object
+  zw-note-backend_internal_dto.CreateCouponRequest:
+    properties:
+      discount_value:
+        description: 分
+        minimum: 1
+        type: integer
+      min_amount:
+        description: 分
+        minimum: 0
+        type: integer
+      name:
+        maxLength: 100
+        type: string
+      type:
+        enum:
+        - new_user
+        - spend_reduce
+        type: string
+      valid_days:
+        maximum: 365
+        minimum: 1
+        type: integer
+    required:
+    - discount_value
+    - min_amount
+    - name
+    - type
+    - valid_days
+    type: object
+  zw-note-backend_internal_dto.CreateDocumentRequest:
+    properties:
+      author:
+        maxLength: 20
+        minLength: 1
+        type: string
+      description:
+        maxLength: 200
+        type: string
+      title:
+        maxLength: 50
+        minLength: 1
+        type: string
+    required:
+    - author
+    - title
+    type: object
+  zw-note-backend_internal_dto.CreateOutlineRequest:
+    properties:
+      parent_id:
+        type: integer
+      sort_order:
+        type: integer
+      title:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - title
+    type: object
+  zw-note-backend_internal_dto.CreateProductRequest:
+    properties:
+      carousel_images:
+        items:
+          type: string
+        type: array
+      category_id:
+        type: integer
+      cover_image:
+        maxLength: 500
+        type: string
+      detail:
+        type: string
+      detail_images:
+        items:
+          type: string
+        type: array
+      grade:
+        maxLength: 50
+        type: string
+      ingredients:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      specification:
+        maxLength: 100
+        type: string
+      storage:
+        maxLength: 255
+        type: string
+    required:
+    - category_id
+    - cover_image
+    - name
+    type: object
+  zw-note-backend_internal_dto.CreateRedemptionCodesRequest:
+    properties:
+      count:
+        maximum: 50
+        minimum: 1
+        type: integer
+      product_ids:
+        items:
+          type: integer
+        maxItems: 20
+        minItems: 1
+        type: array
+    required:
+    - count
+    - product_ids
+    type: object
+  zw-note-backend_internal_dto.DocumentListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.DocumentResponse'
+        type: array
+    type: object
+  zw-note-backend_internal_dto.DocumentResponse:
+    properties:
+      author:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.MPLoginResponse:
+    properties:
+      expire_at:
+        type: integer
+      is_new:
+        description: true if account was just created
+        type: boolean
+      token:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.MPUserResponse:
+    properties:
+      avatar:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      nickname:
+        type: string
+      openid:
+        type: string
+      status:
+        type: integer
+    type: object
+  zw-note-backend_internal_dto.OutlineContentResponse:
+    properties:
+      content:
+        type: string
+      outline_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.OutlineNode:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.OutlineNode'
+        type: array
+      id:
+        type: string
+      parent_id:
+        type: string
+      title:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.ProductListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.ProductResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  zw-note-backend_internal_dto.ProductResponse:
+    properties:
+      carousel_images:
+        items:
+          type: string
+        type: array
+      category_id:
+        type: integer
+      cover_image:
+        type: string
+      created_at:
+        type: string
+      detail:
+        type: string
+      detail_images:
+        items:
+          type: string
+        type: array
+      grade:
+        type: string
+      id:
+        type: integer
+      ingredients:
+        type: string
+      name:
+        type: string
+      specification:
+        type: string
+      status:
+        type: integer
+      storage:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.ProductSummary:
+    properties:
+      cover_image:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      specification:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.RedemptionCodeListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.RedemptionCodeResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  zw-note-backend_internal_dto.RedemptionCodeResponse:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      mp_user_id:
+        type: integer
+      product_ids:
+        items:
+          type: integer
+        type: array
+      status:
+        type: integer
+      updated_at:
+        type: string
+      used_at:
+        type: string
+      used_product_id:
+        type: integer
+    type: object
+  zw-note-backend_internal_dto.ReorderOutlineItem:
+    properties:
+      id:
+        type: integer
+      parent_id:
+        type: integer
+      sort_order:
+        type: integer
+    required:
+    - id
+    type: object
+  zw-note-backend_internal_dto.ReorderOutlineRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.ReorderOutlineItem'
+        type: array
+    required:
+    - items
+    type: object
+  zw-note-backend_internal_dto.SelectProductRequest:
+    properties:
+      product_id:
+        minimum: 1
+        type: integer
+    required:
+    - product_id
+    type: object
+  zw-note-backend_internal_dto.UpdateAddressRequest:
+    properties:
+      city:
+        maxLength: 50
+        type: string
+      detail:
+        maxLength: 255
+        type: string
+      district:
+        maxLength: 50
+        type: string
+      phone:
+        maxLength: 20
+        type: string
+      province:
+        maxLength: 50
+        type: string
+      receiver:
+        maxLength: 50
+        type: string
+      tag:
+        maxLength: 20
+        type: string
+    type: object
+  zw-note-backend_internal_dto.UpdateAdminUserRequest:
+    properties:
+      role:
+        enum:
+        - super_admin
+        - admin
+        - viewer
+        type: string
+      status:
+        enum:
+        - 0
+        - 1
+        type: integer
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    type: object
+  zw-note-backend_internal_dto.UpdateCarouselRequest:
+    properties:
+      image_url:
+        maxLength: 500
+        type: string
+      link:
+        maxLength: 500
+        type: string
+      sort_order:
+        minimum: 0
+        type: integer
+      status:
+        enum:
+        - 0
+        - 1
+        type: integer
+      title:
+        maxLength: 100
+        type: string
+    type: object
+  zw-note-backend_internal_dto.UpdateCategoryRequest:
+    properties:
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      sort_order:
+        type: integer
+      status:
+        enum:
+        - 0
+        - 1
+        type: integer
+    type: object
+  zw-note-backend_internal_dto.UpdateCouponRequest:
+    properties:
+      discount_value:
+        minimum: 1
+        type: integer
+      min_amount:
+        minimum: 0
+        type: integer
+      name:
+        maxLength: 100
+        type: string
+      status:
+        enum:
+        - 0
+        - 1
+        type: integer
+      valid_days:
+        maximum: 365
+        minimum: 1
+        type: integer
+    type: object
+  zw-note-backend_internal_dto.UpdateDocumentRequest:
+    properties:
+      author:
+        maxLength: 20
+        minLength: 1
+        type: string
+      description:
+        maxLength: 200
+        type: string
+      title:
+        maxLength: 50
+        minLength: 1
+        type: string
+    type: object
+  zw-note-backend_internal_dto.UpdateOutlineContentRequest:
+    properties:
+      content:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.UpdateOutlineRequest:
+    properties:
+      clear_parent:
+        type: boolean
+      parent_id:
+        type: integer
+      sort_order:
+        type: integer
+      title:
+        maxLength: 100
+        minLength: 1
+        type: string
+    type: object
+  zw-note-backend_internal_dto.UpdateProductRequest:
+    properties:
+      carousel_images:
+        items:
+          type: string
+        type: array
+      category_id:
+        type: integer
+      cover_image:
+        maxLength: 500
+        type: string
+      detail:
+        type: string
+      detail_images:
+        items:
+          type: string
+        type: array
+      grade:
+        maxLength: 50
+        type: string
+      ingredients:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 100
+        type: string
+      specification:
+        maxLength: 100
+        type: string
+      status:
+        enum:
+        - 0
+        - 1
+        type: integer
+      storage:
+        maxLength: 255
+        type: string
+    type: object
+  zw-note-backend_internal_dto.UpdateRedemptionCodeRequest:
+    properties:
+      product_ids:
+        items:
+          type: integer
+        maxItems: 20
+        minItems: 1
+        type: array
+    required:
+    - product_ids
+    type: object
+  zw-note-backend_internal_dto.UserCouponListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UserCouponResponse'
+        type: array
+    type: object
+  zw-note-backend_internal_dto.UserCouponResponse:
+    properties:
+      claimed_at:
+        type: string
+      coupon_id:
+        type: integer
+      coupon_name:
+        type: string
+      coupon_type:
+        type: string
+      discount_value:
+        type: integer
+      expiry_at:
+        type: string
+      id:
+        type: integer
+      min_amount:
+        type: integer
+      stackable:
+        type: boolean
+      status:
+        type: string
+      used_at:
+        type: string
+    type: object
+  zw-note-backend_internal_dto.ValidateRedemptionCodeRequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+  zw-note-backend_internal_dto.ValidateRedemptionCodeResponse:
+    properties:
+      products:
+        items:
+          $ref: '#/definitions/zw-note-backend_internal_dto.ProductSummary'
+        type: array
+      redemption_code_id:
+        type: integer
+    type: object
+  zw-note-backend_internal_dto.WxLoginRequest:
+    properties:
+      app_key:
+        description: key in wechat.apps config
+        type: string
+      code:
+        description: wx.login() code from mini-program
+        type: string
+    required:
+    - app_key
+    - code
+    type: object
+  zw-note-backend_pkg_utils.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+host: localhost:8004
+info:
+  contact: {}
+  description: RESTful API for PC admin and WeChat mini-program
+  title: zw-note-backend
+  version: "1.0"
+paths:
+  /api/admin/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.AdminLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AdminLoginResponse'
+              type: object
+      summary: Admin login
+      tags:
+      - admin-auth
+  /api/admin/v1/carousels:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CarouselListResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all carousels
+      tags:
+      - admin-carousels
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CreateCarouselRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CarouselResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new carousel
+      tags:
+      - admin-carousels
+  /api/admin/v1/carousels/{id}:
+    delete:
+      parameters:
+      - description: Carousel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a carousel
+      tags:
+      - admin-carousels
+    get:
+      parameters:
+      - description: Carousel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CarouselResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get carousel by ID
+      tags:
+      - admin-carousels
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Carousel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UpdateCarouselRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CarouselResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update a carousel
+      tags:
+      - admin-carousels
+  /api/admin/v1/categories:
+    get:
+      parameters:
+      - description: Page (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 10)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CategoryListResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List categories with pagination
+      tags:
+      - admin-categories
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CategoryResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new product category
+      tags:
+      - admin-categories
+  /api/admin/v1/categories/{id}:
+    delete:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a category
+      tags:
+      - admin-categories
+    get:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CategoryResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get category by ID
+      tags:
+      - admin-categories
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CategoryResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update a category
+      tags:
+      - admin-categories
+  /api/admin/v1/coupons:
+    get:
+      parameters:
+      - description: Page (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 10)
+        in: query
+        name: page_size
+        type: integer
+      - description: 'Filter: new_user | spend_reduce'
+        in: query
+        name: type
+        type: string
+      - description: 'Filter: 0 | 1'
+        in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CouponListResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List coupons with pagination
+      tags:
+      - admin-coupons
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CreateCouponRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CouponResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new coupon
+      tags:
+      - admin-coupons
+  /api/admin/v1/coupons/{id}:
+    delete:
+      parameters:
+      - description: Coupon ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a coupon
+      tags:
+      - admin-coupons
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Coupon ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UpdateCouponRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CouponResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update a coupon
+      tags:
+      - admin-coupons
+  /api/admin/v1/coupons/{id}/cancel:
+    put:
+      parameters:
+      - description: Coupon ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CouponResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Cancel a coupon (no longer claimable)
+      tags:
+      - admin-coupons
+  /api/admin/v1/mp-users/{mp_user_id}/addresses:
+    get:
+      parameters:
+      - description: MP User ID
+        in: path
+        name: mp_user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AddressListResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List addresses for an MP user
+      tags:
+      - admin-addresses
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: MP User ID
+        in: path
+        name: mp_user_id
+        required: true
+        type: integer
+      - description: Create payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CreateAddressRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AddressResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create address for an MP user
+      tags:
+      - admin-addresses
+  /api/admin/v1/mp-users/{mp_user_id}/addresses/{id}:
+    delete:
+      parameters:
+      - description: MP User ID
+        in: path
+        name: mp_user_id
+        required: true
+        type: integer
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete an address
+      tags:
+      - admin-addresses
+    get:
+      parameters:
+      - description: MP User ID
+        in: path
+        name: mp_user_id
+        required: true
+        type: integer
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AddressResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get address by ID
+      tags:
+      - admin-addresses
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: MP User ID
+        in: path
+        name: mp_user_id
+        required: true
+        type: integer
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UpdateAddressRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AddressResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update an address
+      tags:
+      - admin-addresses
+  /api/admin/v1/mp-users/{mp_user_id}/addresses/{id}/default:
+    put:
+      parameters:
+      - description: MP User ID
+        in: path
+        name: mp_user_id
+        required: true
+        type: integer
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AddressResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Set address as default
+      tags:
+      - admin-addresses
+  /api/admin/v1/products:
+    get:
+      parameters:
+      - description: Page (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 10)
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by category ID
+        in: query
+        name: category_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.ProductListResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List products with pagination
+      tags:
+      - admin-products
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.ProductResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new product
+      tags:
+      - admin-products
+  /api/admin/v1/products/{id}:
+    delete:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a product
+      tags:
+      - admin-products
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.ProductResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get product by ID
+      tags:
+      - admin-products
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.ProductResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update a product
+      tags:
+      - admin-products
+  /api/admin/v1/redemption-codes:
+    get:
+      parameters:
+      - description: Page (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 10)
+        in: query
+        name: page_size
+        type: integer
+      - description: 'Filter: 0 | 1'
+        in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.RedemptionCodeListResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List redemption codes with pagination
+      tags:
+      - admin-redemption-codes
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CreateRedemptionCodesRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.RedemptionCodeListResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create redemption codes in batch (max 50)
+      tags:
+      - admin-redemption-codes
+  /api/admin/v1/redemption-codes/{id}:
+    delete:
+      parameters:
+      - description: Redemption Code ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a redemption code (only when unused)
+      tags:
+      - admin-redemption-codes
+    get:
+      parameters:
+      - description: Redemption Code ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.RedemptionCodeResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get redemption code by ID
+      tags:
+      - admin-redemption-codes
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Redemption Code ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UpdateRedemptionCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.RedemptionCodeResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update redemption code product bindings (only when unused)
+      tags:
+      - admin-redemption-codes
+  /api/admin/v1/upload/image:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Image file (jpg/png/webp/gif)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Upload an image
+      tags:
+      - admin-upload
+  /api/admin/v1/users:
+    get:
+      parameters:
+      - description: Page (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 10)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AdminUserListResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List admin users with pagination
+      tags:
+      - admin-users
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CreateAdminUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AdminUserResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new admin user
+      tags:
+      - admin-users
+  /api/admin/v1/users/{id}:
+    delete:
+      parameters:
+      - description: Admin User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete an admin user (super_admin only)
+      tags:
+      - admin-users
+    get:
+      parameters:
+      - description: Admin User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AdminUserResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get admin user by ID
+      tags:
+      - admin-users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Admin User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UpdateAdminUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AdminUserResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update an admin user
+      tags:
+      - admin-users
+  /api/mp/v1/addresses:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AddressListResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List addresses for current user
+      tags:
+      - mp-addresses
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CreateAddressRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AddressResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new address
+      tags:
+      - mp-addresses
+  /api/mp/v1/addresses/{id}:
+    delete:
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete an address
+      tags:
+      - mp-addresses
+    get:
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AddressResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get address by ID
+      tags:
+      - mp-addresses
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UpdateAddressRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AddressResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update an address
+      tags:
+      - mp-addresses
+  /api/mp/v1/addresses/{id}/default:
+    put:
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.AddressResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Set address as default
+      tags:
+      - mp-addresses
+  /api/mp/v1/auth/wx-login:
+    post:
+      consumes:
+      - application/json
+      description: Exchange a wx.login() code for a project JWT.
+      parameters:
+      - description: WeChat login payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.WxLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.MPLoginResponse'
+              type: object
+      summary: WeChat mini-program login
+      tags:
+      - mp-auth
+  /api/mp/v1/carousels:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CarouselListResponse'
+              type: object
+      summary: List enabled carousels for home page (public, no auth)
+      tags:
+      - mp-carousels
+  /api/mp/v1/categories:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/zw-note-backend_internal_dto.CategoryResponse'
+                  type: array
+              type: object
+      summary: List enabled categories (public, no auth)
+      tags:
+      - mp-categories
+  /api/mp/v1/coupons:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.CouponListResponse'
+              type: object
+      summary: List claimable coupons (public, no auth)
+      tags:
+      - mp-coupons
+  /api/mp/v1/coupons/{id}/claim:
+    post:
+      parameters:
+      - description: Coupon ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.UserCouponResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Claim a coupon
+      tags:
+      - mp-coupons
+  /api/mp/v1/coupons/my:
+    get:
+      parameters:
+      - description: 'Filter: unused | used | expired'
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.UserCouponListResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List current user's coupons
+      tags:
+      - mp-coupons
+  /api/mp/v1/products:
+    get:
+      parameters:
+      - description: Page (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 10)
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by category ID
+        in: query
+        name: category_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.ProductListResponse'
+              type: object
+      summary: List products with pagination (enabled only, public)
+      tags:
+      - mp-products
+  /api/mp/v1/products/{id}:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.ProductResponse'
+              type: object
+      summary: Get product by ID (enabled only, public)
+      tags:
+      - mp-products
+  /api/mp/v1/redemption-codes/{id}/select-product:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Redemption Code ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Select payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.SelectProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Select product for redemption code (call once only)
+      tags:
+      - mp-redemption-codes
+  /api/mp/v1/redemption-codes/validate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Validate payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.ValidateRedemptionCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.ValidateRedemptionCodeResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Validate redemption code and lock to current user (returns selectable
+        products)
+      tags:
+      - mp-redemption-codes
+  /api/mp/v1/user/profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.MPUserResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get the current mini-program user's profile
+      tags:
+      - mp-user
+  /api/notes/v1/documents:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.DocumentListResponse'
+              type: object
+      summary: List documents for current user
+      tags:
+      - notes-documents
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CreateDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.DocumentResponse'
+              type: object
+      summary: Create a new document
+      tags:
+      - notes-documents
+  /api/notes/v1/documents/{id}:
+    delete:
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      summary: Delete a document
+      tags:
+      - notes-documents
+    get:
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.DocumentResponse'
+              type: object
+      summary: Get document by ID
+      tags:
+      - notes-documents
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UpdateDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.DocumentResponse'
+              type: object
+      summary: Update a document
+      tags:
+      - notes-documents
+  /api/notes/v1/documents/{id}/outlines:
+    get:
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/zw-note-backend_internal_dto.OutlineNode'
+                  type: array
+              type: object
+      summary: Get a document's outline tree
+      tags:
+      - notes-outlines
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Create payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.CreateOutlineRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.OutlineNode'
+              type: object
+      summary: Create an outline node under a document
+      tags:
+      - notes-outlines
+  /api/notes/v1/documents/{id}/outlines/reorder:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Reorder payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.ReorderOutlineRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      summary: Batch-reorder outline nodes within a document
+      tags:
+      - notes-outlines
+  /api/notes/v1/outlines/{outlineId}:
+    delete:
+      parameters:
+      - description: Outline ID
+        in: path
+        name: outlineId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+      summary: Delete an outline node
+      tags:
+      - notes-outlines
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Outline ID
+        in: path
+        name: outlineId
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UpdateOutlineRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.OutlineNode'
+              type: object
+      summary: Update an outline node
+      tags:
+      - notes-outlines
+  /api/notes/v1/outlines/{outlineId}/content:
+    get:
+      parameters:
+      - description: Outline ID
+        in: path
+        name: outlineId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.OutlineContentResponse'
+              type: object
+      summary: Get an outline node's Markdown content
+      tags:
+      - notes-contents
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Outline ID
+        in: path
+        name: outlineId
+        required: true
+        type: integer
+      - description: Content payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/zw-note-backend_internal_dto.UpdateOutlineContentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.OutlineContentResponse'
+              type: object
+      summary: Save an outline node's Markdown content
+      tags:
+      - notes-contents
+schemes:
+- http
+swagger: "2.0"
