@@ -13,6 +13,10 @@
 name: zw-note
 services:
   backend:
+    # image 对应 .github/workflows/deploy.yml 推送到 Docker Hub 的镜像；
+    # 本机执行 `up -d --build` 时会用 build 重新构建并打上这个 tag，
+    # 服务器上执行 `pull && up -d`（不带 --build）时则直接拉取该镜像，无需本地构建
+    image: wudande/zw-note-backend:latest
     build:
       context: ..
       dockerfile: docker/backend/Dockerfile
@@ -34,6 +38,8 @@ services:
       - note-uploads:/app/uploads
 
   frontend:
+    # 同 backend：对应 Docker Hub 上的前端镜像
+    image: wudande/zw-note-frontend:latest
     build:
       context: ..
       dockerfile: docker/frontend/Dockerfile

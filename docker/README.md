@@ -77,6 +77,38 @@ Docker Engine（配合 `extra_hosts: host-gateway`）下可用，指向的是运
 - 也用 compose 起在同一网络里（即使用本文件的 `local-db` profile）：
   应将 `DB_HOST` 改成服务名 `postgres`，让 backend 通过 Docker 内部 DNS 访问。
 
+## CI/CD 自动部署（`.github/workflows/deploy.yml`）
+
+push 到 `main` 分支时会自动：
+
+1. 构建 backend / frontend 镜像并推送到 Docker Hub
+   （`wudande/zw-note-backend`、`wudande/zw-note-frontend`）；
+2. SSH 登录服务器，`git pull` 同步最新的 `docker-compose.yml` 等文件，
+   再 `docker compose pull && docker compose up -d` 完成滚动更新。
+
+服务器端需提前准备好：
+
+- 仓库已 `git clone` 到某个目录（如 `/opt/zw-note`），且该目录下执行过
+  `cp docker/.env.example docker/.env` 并填好数据库连接参数；
+- 部署脚本会用 workflow 里的 `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` 自动
+  在服务器上执行一次 `docker login`，服务器本身无需单独配置账号。
+
+需要在仓库 **Settings → Secrets and variables → Actions** 里配置：
+
+| Secret               | 说明                                        |
+|----------------------|---------------------------------------------|
+| `DOCKERHUB_USERNAME` | Docker Hub 用户名（`wudande`）              |
+| `DOCKERHUB_TOKEN`    | Docker Hub Access Token（Account Settings → Security → New Access Token，权限选 Read & Write） |
+| `SSH_HOST`           | 服务器地址                                  |
+| `SSH_USER`           | SSH 登录用户名                              |
+| `SSH_PRIVATE_KEY`    | SSH 私钥（PEM 全文）                        |
+| `SSH_PORT`           | SSH 端口，可不填（默认 22）                 |
+| `DEPLOY_PATH`        | 服务器上仓库所在目录（第 1 步克隆的路径）   |
+
+`docker-compose.yml` 里 backend / frontend 服务同时保留了 `image:` 和
+`build:`：本机 `up -d --build` 走本地构建，服务器上不带 `--build` 的
+`pull && up -d` 则直接使用 CI 推送的镜像。
+
 ## 后端 Makefile 快捷方式
 
 在 `zw-note-backend/` 下仍可使用：
