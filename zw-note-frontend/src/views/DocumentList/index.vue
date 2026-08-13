@@ -22,7 +22,6 @@
         <div v-if="!documentsLoading && documents.length === 0" class="document-list-page__empty">
           <p class="document-list-page__empty-title">还没有文档</p>
           <p class="document-list-page__empty-desc">从一篇空白页开始整理你的想法。</p>
-          <el-button type="primary" @click="handleCreate">新建文档</el-button>
         </div>
 
         <div v-else class="document-list-page__grid">

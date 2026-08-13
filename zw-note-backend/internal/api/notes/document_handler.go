@@ -68,6 +68,33 @@ func (h *DocumentHandler) List(c *gin.Context) {
 	utils.Success(c, dto.DocumentListResponse{List: resp})
 }
 
+// ListTrash godoc
+// @Summary  List soft-deleted documents (trash) for current user
+// @Tags     notes-documents
+// @Produce  json
+// @Success  200 {object} utils.Response{data=dto.DocumentListResponse}
+// @Router   /api/notes/v1/documents/trash [get]
+func (h *DocumentHandler) ListTrash(c *gin.Context) {
+	userID, ok := getNotesUserID(c)
+	if !ok {
+		utils.Unauthorized(c)
+		return
+	}
+
+	list, err := h.svc.ListTrash(c.Request.Context(), userID)
+	if err != nil {
+		h.log.Error("list trashed documents", zap.Error(err))
+		utils.ServerError(c)
+		return
+	}
+
+	resp := make([]*dto.DocumentResponse, 0, len(list))
+	for _, d := range list {
+		resp = append(resp, toDocumentResponse(d))
+	}
+	utils.Success(c, dto.DocumentListResponse{List: resp})
+}
+
 // Create godoc
 // @Summary  Create a new document
 // @Tags     notes-documents
@@ -174,7 +201,7 @@ func (h *DocumentHandler) Update(c *gin.Context) {
 }
 
 // Delete godoc
-// @Summary  Delete a document
+// @Summary  Soft-delete a document (moves it to trash, can be restored)
 // @Tags     notes-documents
 // @Produce  json
 // @Param    id  path int true "Document ID"
@@ -202,6 +229,38 @@ func (h *DocumentHandler) Delete(c *gin.Context) {
 	}
 
 	utils.Success(c, nil)
+}
+
+// Restore godoc
+// @Summary  Restore a soft-deleted document out of the trash
+// @Tags     notes-documents
+// @Produce  json
+// @Param    id  path int true "Document ID"
+// @Success  200 {object} utils.Response{data=dto.DocumentResponse}
+// @Router   /api/notes/v1/documents/{id}/restore [post]
+func (h *DocumentHandler) Restore(c *gin.Context) {
+	userID, ok := getNotesUserID(c)
+	if !ok {
+		utils.Unauthorized(c)
+		return
+	}
+
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		utils.ParamError(c, "invalid document id")
+		return
+	}
+
+	d, err := h.svc.Restore(c.Request.Context(), id, userID)
+	if err != nil {
+		if !utils.HandleAppError(c, err) {
+			h.log.Error("restore document", zap.Error(err))
+			utils.ServerError(c)
+		}
+		return
+	}
+
+	utils.Success(c, toDocumentResponse(d))
 }
 
 func toDocumentResponse(d *model.Document) *dto.DocumentResponse {

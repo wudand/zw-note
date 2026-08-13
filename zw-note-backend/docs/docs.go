@@ -2585,6 +2585,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/notes/v1/documents/trash": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notes-documents"
+                ],
+                "summary": "List soft-deleted documents (trash) for current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/zw-note-backend_pkg_utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/zw-note-backend_internal_dto.DocumentListResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/api/notes/v1/documents/{id}": {
             "get": {
                 "produces": [
@@ -2681,7 +2712,7 @@ const docTemplate = `{
                 "tags": [
                     "notes-documents"
                 ],
-                "summary": "Delete a document",
+                "summary": "Soft-delete a document (moves it to trash, can be restored)",
                 "parameters": [
                     {
                         "type": "integer",
@@ -2829,6 +2860,46 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/zw-note-backend_pkg_utils.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/notes/v1/documents/{id}/restore": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notes-documents"
+                ],
+                "summary": "Restore a soft-deleted document out of the trash",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Document ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/zw-note-backend_pkg_utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/zw-note-backend_internal_dto.DocumentResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -2993,6 +3064,49 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/zw-note-backend_internal_dto.OutlineContentResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/notes/v1/upload/image": {
+            "post": {
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notes-upload"
+                ],
+                "summary": "Upload an image for use in note content",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image file (jpg/png/webp/gif)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/zw-note-backend_pkg_utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
                                         }
                                     }
                                 }

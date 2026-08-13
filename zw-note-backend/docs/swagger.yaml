@@ -2278,7 +2278,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
-      summary: Delete a document
+      summary: Soft-delete a document (moves it to trash, can be restored)
       tags:
       - notes-documents
     get:
@@ -2414,6 +2414,46 @@ paths:
       summary: Batch-reorder outline nodes within a document
       tags:
       - notes-outlines
+  /api/notes/v1/documents/{id}/restore:
+    post:
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.DocumentResponse'
+              type: object
+      summary: Restore a soft-deleted document out of the trash
+      tags:
+      - notes-documents
+  /api/notes/v1/documents/trash:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/zw-note-backend_internal_dto.DocumentListResponse'
+              type: object
+      summary: List soft-deleted documents (trash) for current user
+      tags:
+      - notes-documents
   /api/notes/v1/outlines/{outlineId}:
     delete:
       parameters:
@@ -2515,6 +2555,31 @@ paths:
       summary: Save an outline node's Markdown content
       tags:
       - notes-contents
+  /api/notes/v1/upload/image:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Image file (jpg/png/webp/gif)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/zw-note-backend_pkg_utils.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: Upload an image for use in note content
+      tags:
+      - notes-upload
 schemes:
 - http
 swagger: "2.0"

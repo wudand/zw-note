@@ -5,6 +5,7 @@
   --el-color-primary-light-7: #b1d3ae;
   --el-color-primary-light-8: #c5dfc3;
   --el-color-primary-light-9: #daeade;
+  --el-color-primary-dark-2: #4a8548;
 
   /* 柔和成功色，覆盖 Element Plus 默认亮绿 */
   --el-color-success: #5a9e58!important;

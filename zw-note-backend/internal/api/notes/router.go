@@ -13,9 +13,11 @@ import (
 //
 //	GET    /documents                          – list documents
 //	POST   /documents                          – create document
+//	GET    /documents/trash                    – list soft-deleted documents
 //	GET    /documents/:id                      – get document
 //	PUT    /documents/:id                      – update document
-//	DELETE /documents/:id                      – delete document
+//	DELETE /documents/:id                      – soft-delete document (recoverable)
+//	POST   /documents/:id/restore              – restore a soft-deleted document
 //	GET    /documents/:id/outlines             – get outline tree
 //	POST   /documents/:id/outlines             – create outline node
 //	PUT    /documents/:id/outlines/reorder     – batch-reorder outline nodes
@@ -33,9 +35,11 @@ func RegisterRoutes(r *gin.Engine, docHandler *DocumentHandler, outlineHandler *
 	docs := v1.Group("/documents")
 	docs.GET("", docHandler.List)
 	docs.POST("", docHandler.Create)
+	docs.GET("/trash", docHandler.ListTrash)
 	docs.GET("/:id", docHandler.GetByID)
 	docs.PUT("/:id", docHandler.Update)
 	docs.DELETE("/:id", docHandler.Delete)
+	docs.POST("/:id/restore", docHandler.Restore)
 	docs.GET("/:id/outlines", outlineHandler.GetTree)
 	docs.POST("/:id/outlines", outlineHandler.Create)
 	docs.PUT("/:id/outlines/reorder", outlineHandler.Reorder)

@@ -3,14 +3,17 @@ package model
 import "time"
 
 // Document maps to the `documents` table.
+// DeletedAt is nil for active documents; a non-nil value means the document
+// has been soft-deleted and can still be brought back via Restore.
 type Document struct {
-	ID          uint64    `db:"id"`
-	UserID      uint64    `db:"user_id"`
-	Title       string    `db:"title"`
-	Description string    `db:"description"`
-	Author      string    `db:"author"`
-	CreatedAt   time.Time `db:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"`
+	ID          uint64     `db:"id"`
+	UserID      uint64     `db:"user_id"`
+	Title       string     `db:"title"`
+	Description string     `db:"description"`
+	Author      string     `db:"author"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at"`
+	DeletedAt   *time.Time `db:"deleted_at"`
 }
 
 // DocumentOutline maps to the `document_outlines` table.

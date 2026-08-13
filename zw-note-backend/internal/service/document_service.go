@@ -24,7 +24,13 @@ type DocumentService interface {
 	GetByID(ctx context.Context, id, userID uint64) (*model.Document, error)
 	List(ctx context.Context, userID uint64) ([]*model.Document, error)
 	Update(ctx context.Context, id, userID uint64, req *dto.UpdateDocumentRequest) (*model.Document, error)
+	// Delete soft-deletes a document (sets deleted_at); it can be undone via Restore.
 	Delete(ctx context.Context, id, userID uint64) error
+	// ListTrash lists the current user's soft-deleted documents.
+	ListTrash(ctx context.Context, userID uint64) ([]*model.Document, error)
+	// Restore undoes a soft delete, bringing the document (and its untouched
+	// outlines/contents) back into the active list.
+	Restore(ctx context.Context, id, userID uint64) (*model.Document, error)
 }
 
 type documentService struct {
@@ -135,10 +141,36 @@ func (s *documentService) Delete(ctx context.Context, id, userID uint64) error {
 		return utils.ErrDocumentNotFound
 	}
 
-	// document_outlines / outline_contents are cleaned up by the FK's ON DELETE CASCADE.
-	if err := s.docRepo.Delete(ctx, nil, id, userID); err != nil {
+	// Logical delete only: document_outlines / outline_contents are left untouched
+	// so Restore can bring everything back exactly as it was.
+	if err := s.docRepo.SoftDelete(ctx, nil, id, userID); err != nil {
 		return err
 	}
-	s.log.Info("document deleted", zap.Uint64("id", id), zap.Uint64("user_id", userID))
+	s.log.Info("document soft-deleted", zap.Uint64("id", id), zap.Uint64("user_id", userID))
 	return nil
+}
+
+func (s *documentService) ListTrash(ctx context.Context, userID uint64) ([]*model.Document, error) {
+	return s.docRepo.ListDeletedByUser(ctx, userID)
+}
+
+func (s *documentService) Restore(ctx context.Context, id, userID uint64) (*model.Document, error) {
+	d, err := s.docRepo.GetDeletedByIDAndUser(ctx, id, userID)
+	if err != nil {
+		return nil, err
+	}
+	if d == nil {
+		return nil, utils.ErrDocumentNotFound
+	}
+
+	if err := s.docRepo.Restore(ctx, nil, id, userID); err != nil {
+		return nil, err
+	}
+
+	restored, err := s.docRepo.GetByIDAndUser(ctx, id, userID)
+	if err != nil {
+		return nil, err
+	}
+	s.log.Info("document restored", zap.Uint64("id", id), zap.Uint64("user_id", userID))
+	return restored, nil
 }
