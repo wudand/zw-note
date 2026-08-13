@@ -1,6 +1,6 @@
 <template>
     <div class="outline">
-        <div class="outline__header">
+        <div v-if="props.showHeader" class="outline__header">
             <div class="outline__header_left">
                 <button type="button" class="outline__back" aria-label="返回" @click="handleReturn">
                   <el-icon :size="16"><Back /></el-icon>
@@ -263,6 +263,8 @@ interface Props {
   activeId?: string
   /** 目录上方标题：不传时展示"目录"（预览页保持不变，编辑页可传当前文档名称） */
   title?: string
+  /** 是否展示顶部的返回按钮 + 标题栏（移动端抽屉直接展示列表，不需要） */
+  showHeader?: boolean
 }
 
 interface Emits {
@@ -275,6 +277,7 @@ const emit = defineEmits<Emits>()
 const props = withDefaults(defineProps<Props>(), {
   showEdit: false,
   activeId: '',
+  showHeader: true,
 })
 
 function cloneOutline(items: OutlineItem[]): OutlineItem[] {

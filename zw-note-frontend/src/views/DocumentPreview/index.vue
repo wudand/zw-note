@@ -1,6 +1,7 @@
 <template>
   <div class="document-preview">
-    <div class="document-preview__container" v-loading="pageLoading">
+    <!-- 桌面：左右分栏，目录常驻 -->
+    <div v-if="!isMobile" class="document-preview__container" v-loading="pageLoading">
       <splitpanes>
         <pane size="20" min-size="15" max-size="35">
           <aside class="document-preview__sidebar">
@@ -15,60 +16,81 @@
 
         <pane size="80">
           <main class="document-preview__main" v-loading="contentLoading">
-            <div class="document-preview__header">
-              <h1 class="document-preview__title">
-                {{ currentDocument?.title || '文档预览' }}
-              </h1>
-              <div class="document-preview__meta">
-                <span v-if="currentDocument?.author" class="document-preview__author">
-                  作者：{{ currentDocument.author }}
-                </span>
-                <span v-if="formattedUpdatedAt" class="document-preview__date">
-                  更新时间：{{ formattedUpdatedAt }}
-                </span>
-              </div>
-              <p
-                v-if="currentDocument?.description"
-                class="document-preview__desc"
-              >
-                {{ currentDocument.description }}
-              </p>
-            </div>
-
-            <!-- 父级无正文：文档目录式子节点列表 -->
-            <div v-if="viewMode === 'children'" class="document-preview__children">
-              <h2 class="document-preview__section-title">{{ sectionTitle }}</h2>
-              <ul class="document-preview__child-list">
-                <li
-                  v-for="child in childItems"
-                  :key="child.id"
-                  class="document-preview__child-item"
-                >
-                  <button
-                    type="button"
-                    class="document-preview__child-link"
-                    @click="handleChildNavigate(child)"
-                  >
-                    {{ child.title }}
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            <div
-              v-else-if="!contentLoading && !content.trim()"
-              class="document-preview__empty"
-            >
-              当前目录暂无内容
-            </div>
-            <div
-              v-else
-              class="document-preview__content"
-              v-html="renderedContent"
-            ></div>
+            <DocumentPreviewBody
+              :title="currentDocument?.title"
+              :author="currentDocument?.author"
+              :description="currentDocument?.description"
+              :formatted-updated-at="formattedUpdatedAt"
+              :view-mode="viewMode"
+              :outline="outline"
+              :section-title="sectionTitle"
+              :child-items="childItems"
+              :content-loading="contentLoading"
+              :content="content"
+              :rendered-content="renderedContent"
+              @child-navigate="handleChildNavigate"
+            />
           </main>
         </pane>
       </splitpanes>
+    </div>
+
+    <!-- 移动端：目录收进底部抽屉，正文全宽 -->
+    <div v-else class="document-preview__mobile" v-loading="pageLoading">
+      <header class="document-preview__mobile-bar">
+        <button
+          type="button"
+          class="document-preview__mobile-back"
+          aria-label="返回"
+          @click="router.back()"
+        >
+          <el-icon :size="18"><ArrowLeft /></el-icon>
+        </button>
+        <span class="document-preview__mobile-title" :title="currentDocument?.title">
+          {{ currentDocument?.title || '文档预览' }}
+        </span>
+        <button
+          type="button"
+          class="document-preview__mobile-toc"
+          aria-label="打开目录"
+          @click="drawerVisible = true"
+        >
+          <el-icon :size="18"><List /></el-icon>
+        </button>
+      </header>
+
+      <main class="document-preview__mobile-main" v-loading="contentLoading">
+        <DocumentPreviewBody
+          :title="currentDocument?.title"
+          :author="currentDocument?.author"
+          :description="currentDocument?.description"
+          :formatted-updated-at="formattedUpdatedAt"
+          :view-mode="viewMode"
+          :outline="outline"
+          :section-title="sectionTitle"
+          :child-items="childItems"
+          :content-loading="contentLoading"
+          :content="content"
+          :rendered-content="renderedContent"
+          @child-navigate="handleChildNavigate"
+        />
+      </main>
+
+      <el-drawer
+        v-model="drawerVisible"
+        direction="ltr"
+        size="78%"
+        :with-header="false"
+        class="document-preview__drawer"
+      >
+        <DocumentOutline
+          :modelValue="outline"
+          :showEdit="false"
+          :show-header="false"
+          :active-id="currentOutlineId"
+          @item-click="handleOutlineClickMobile"
+        />
+      </el-drawer>
     </div>
   </div>
 </template>
@@ -76,16 +98,24 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { ArrowLeft, List } from '@element-plus/icons-vue'
 import type { OutlineItem } from '@/components/DocumentOutline/index.vue'
 import { useDocumentStore } from '@/store/documentStore'
 import { renderMarkdown } from '@/utils/markdown'
+import { useIsMobile } from '@/composables/useIsMobile'
 
 const DocumentOutline = defineAsyncComponent(() => import('@/components/DocumentOutline/index.vue'))
+const DocumentPreviewBody = defineAsyncComponent(
+  () => import('./components/DocumentPreviewBody.vue'),
+)
 
 const route = useRoute()
+const router = useRouter()
 const store = useDocumentStore()
+const isMobile = useIsMobile()
+const drawerVisible = ref(false)
 const {
   currentDocument,
   currentOutline: outline,
@@ -98,8 +128,12 @@ const {
 
 const pageLoading = computed(() => documentLoading.value || outlineLoading.value)
 
-/** content：展示 Markdown；children：父级无正文时展示子目录入口 */
-const viewMode = ref<'content' | 'children'>('content')
+/**
+ * overview：默认状态，未选中任何目录，展示全部目录任务列表
+ * content：展示 Markdown
+ * children：父级无正文时展示子目录入口
+ */
+const viewMode = ref<'overview' | 'content' | 'children'>('overview')
 const childItems = ref<OutlineItem[]>([])
 const sectionTitle = ref('')
 
@@ -153,6 +187,11 @@ function handleOutlineClick(item: OutlineItem) {
   openOutlineItem(item)
 }
 
+function handleOutlineClickMobile(item: OutlineItem) {
+  openOutlineItem(item)
+  drawerVisible.value = false
+}
+
 function handleChildNavigate(child: OutlineItem) {
   const node = findOutlineItem(child.id) ?? child
   openOutlineItem(node)
@@ -172,9 +211,6 @@ onMounted(async () => {
       store.fetchDocumentById(documentId),
       store.fetchOutline(documentId),
     ])
-    if (outline.value.length > 0 && outline.value[0]) {
-      await openOutlineItem(outline.value[0])
-    }
   } catch (error: any) {
     ElMessage.error(error?.message || '加载文档失败')
   }
@@ -216,250 +252,63 @@ onBeforeUnmount(() => {
     padding: 40px 60px;
   }
 
-  &__header {
-    margin-bottom: 32px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid #e8e8e5;
-  }
-
-  &__title {
-    margin: 0 0 12px 0;
-    font-size: 28px;
-    font-weight: 650;
-    letter-spacing: -0.03em;
-    color: #111;
-    line-height: 1.25;
-  }
-
-  &__meta {
+  /* ────────── 移动端阅读壳：顶栏 + 全宽正文 + 底部抽屉目录 ────────── */
+  &__mobile {
+    flex: 1;
+    min-height: 0;
     display: flex;
-    gap: 20px;
-    font-size: 13px;
-    color: #6b6b6b;
+    flex-direction: column;
+    background-color: #ffffff;
   }
 
-  &__desc {
-    margin: 12px 0 0;
-    font-size: 14px;
-    line-height: 1.55;
-    color: #6b6b6b;
-  }
-
-  &__author,
-  &__date {
+  &__mobile-bar {
+    flex-shrink: 0;
+    height: 48px;
     display: flex;
     align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+    border-bottom: 1px solid #e8e8e5;
+    background-color: #ffffff;
   }
 
-  &__empty {
-    padding: 48px 0;
-    text-align: center;
-    font-size: 14px;
-    color: #9b9b9b;
-  }
-
-  &__children {
-    max-width: 720px;
-  }
-
-  &__section-title {
-    margin: 0 0 20px;
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: #111;
-    line-height: 1.3;
-  }
-
-  /* 文档 TOC 风格：圆点 + 蓝色链接，参考常见 Markdown 目录 */
-  &__child-list {
-    list-style: disc;
-    margin: 0;
-    padding: 0 0 0 1.5em;
-  }
-
-  &__child-item {
-    margin: 0 0 14px;
-    padding: 0;
-    line-height: 1.7;
-    color: #374151;
-
-    &::marker {
-      color: #4b5563;
-    }
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  &__child-link {
-    display: inline;
-    margin: 0;
-    padding: 0;
+  &__mobile-back,
+  &__mobile-toc {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: none;
+    border-radius: 4px;
     background: transparent;
-    color: #3b6ea5;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 1.7;
-    letter-spacing: -0.01em;
-    text-align: left;
+    color: #374151;
     cursor: pointer;
-    text-decoration: none;
-    transition: color 160ms ease, text-decoration-color 160ms ease;
+    touch-action: manipulation;
 
-    &:hover {
-      color: #2d5a8a;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-
-    &:focus-visible {
-      outline: 2px solid color-mix(in srgb, #3b6ea5 45%, transparent);
-      outline-offset: 3px;
-      border-radius: 2px;
+    &:active {
+      background-color: rgba(0, 0, 0, 0.06);
     }
   }
 
-  &__content {
-    max-width: 900px;
+  &__mobile-title {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
     color: #111;
-    font-size: 16px;
-    line-height: 1.6;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-    :deep(h1),
-    :deep(h2),
-    :deep(h3),
-    :deep(h4),
-    :deep(h5),
-    :deep(h6) {
-      margin-top: 32px;
-      margin-bottom: 16px;
-      font-weight: 600;
-      line-height: 1.25;
-      color: #111;
-    }
-
-    :deep(h1) {
-      font-size: 2em;
-      border-bottom: 1px solid #eaecef;
-      padding-bottom: 0.3em;
-    }
-
-    :deep(h2) {
-      font-size: 1.5em;
-      border-bottom: 1px solid #eaecef;
-      padding-bottom: 0.3em;
-    }
-
-    :deep(h3) {
-      font-size: 1.25em;
-    }
-
-    :deep(h4) {
-      font-size: 1.1em;
-    }
-
-    :deep(p) {
-      margin-bottom: 16px;
-      line-height: 1.7;
-    }
-
-    :deep(ul),
-    :deep(ol) {
-      margin-bottom: 16px;
-      padding-left: 2em;
-    }
-
-    :deep(li) {
-      margin-bottom: 8px;
-      line-height: 1.6;
-    }
-
-    :deep(code) {
-      padding: 3px 6px;
-      background-color: rgba(27, 31, 35, 0.05);
-      border-radius: 3px;
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-      font-size: 14px;
-    }
-
-    :deep(pre) {
-      padding: 16px;
-      overflow: auto;
-      background-color: #f6f8fa;
-      border-radius: 6px;
-      margin: 16px 0;
-      border: 1px solid #e8e8e5;
-
-      code {
-        padding: 0;
-        background-color: transparent;
-        font-size: 14px;
-        line-height: 1.45;
-      }
-    }
-
-    :deep(blockquote) {
-      padding: 0 1em;
-      color: #6b6b6b;
-      border-left: 0.25em solid #d6d3d1;
-      margin: 16px 0;
-    }
-
-    :deep(table) {
-      border-collapse: collapse;
-      margin-bottom: 16px;
-      width: 100%;
-
-      th,
-      td {
-        padding: 8px 13px;
-        border: 1px solid #e8e8e5;
-        word-break: break-word;
-      }
-
-      th {
-        background-color: #f7f7f5;
-        font-weight: 600;
-      }
-
-      tbody tr:nth-child(2n) {
-        background-color: #fafafa;
-      }
-    }
-
-    :deep(hr) {
-      height: 1px;
-      padding: 0;
-      margin: 24px 0;
-      background-color: #e8e8e5;
-      border: 0;
-    }
-
-    :deep(img) {
-      max-width: 100%;
-      height: auto;
-      margin: 16px 0;
-    }
-
-    :deep(a) {
-      color: #5a9e58;
-      text-decoration: none;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-
-    :deep(strong) {
-      font-weight: 600;
-    }
-
-    :deep(em) {
-      font-style: italic;
-    }
+  &__mobile-main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px 16px;
   }
 }
 
@@ -474,31 +323,20 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 1024px) {
-  .document-preview {
-    &__main {
-      padding: 32px 24px;
-    }
-
-    &__title {
-      font-size: 24px;
-    }
+  .document-preview__main {
+    padding: 32px 24px;
   }
 }
+</style>
 
-@media (max-width: 768px) {
-  .document-preview {
-    &__main {
-      padding: 24px 16px;
-    }
-
-    &__title {
-      font-size: 22px;
-    }
-
-    &__meta {
-      flex-direction: column;
-      gap: 8px;
-    }
-  }
+<style lang="scss">
+/*
+ * el-drawer 会 teleport 到 body 之外渲染，scoped + :deep() 对 teleport 出去的
+ * 节点匹配不稳定，这里用不加 scoped 的全局样式块直接兜底覆盖，避免 Element Plus
+ * 默认的 .el-drawer__body padding 残留。
+ */
+.document-preview__drawer .el-drawer__body {
+  padding: 0 !important;
+  overflow: hidden;
 }
 </style>

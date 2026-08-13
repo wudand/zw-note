@@ -1,7 +1,10 @@
 <template>
   <div class="document-list-page">
     <div class="document-list-page__container">
-      <header class="document-list-page__header">
+      <header
+        class="document-list-page__header"
+        :class="{ 'document-list-page__header--sticky': isMobile }"
+      >
         <div class="document-list-page__brand">
           <div class="document-list-page__mark" aria-hidden="true">
             <img src="/logo_no.png" alt="" class="document-list-page__logo" />
@@ -9,82 +12,95 @@
           <div class="document-list-page__brand-copy">
             <div class="document-list-page__brand-row">
               <h1 class="document-list-page__title">笔记</h1>
+              <span v-if="isMobile" class="document-list-page__count-chip">
+                {{ documentsLoading ? '…' : documents.length }}
+              </span>
             </div>
-            <p class="document-list-page__subtitle">
+            <p v-if="!isMobile" class="document-list-page__subtitle">
               {{ documentsLoading ? '加载中…' : `${documents.length} 篇文档` }}
             </p>
           </div>
         </div>
-        <el-button type="primary" @click="handleCreate">新建文档</el-button>
+        <el-button v-if="!isMobile" type="primary" @click="handleCreate">新建文档</el-button>
       </header>
 
       <main class="document-list-page__main" v-loading="documentsLoading">
         <div v-if="!documentsLoading && documents.length === 0" class="document-list-page__empty">
+          <span v-if="isMobile" class="document-list-page__empty-icon" aria-hidden="true">
+            <el-icon :size="22"><Document /></el-icon>
+          </span>
           <p class="document-list-page__empty-title">还没有文档</p>
           <p class="document-list-page__empty-desc">从一篇空白页开始整理你的想法。</p>
         </div>
 
-        <div v-else class="document-list-page__grid">
+        <div v-else class="document-list-page__grid" :class="{ 'document-list-page__grid--rows': isMobile }">
           <article
             v-for="document in documents"
             :key="document.id"
             class="note-card"
+            :class="{ 'note-card--row': isMobile }"
             role="button"
             tabindex="0"
             @click="handlePreview(document)"
             @keydown.enter="handlePreview(document)"
           >
-            <header class="note-card__header">
-              <h2 class="note-card__title" :title="document.title">{{ document.title }}</h2>
-              <div class="note-card__more-wrap" @click.stop>
-                <el-dropdown
-                  trigger="click"
-                  @command="handleDropdownCommand"
-                  @visible-change="(open) => onMenuVisibleChange(document.id, open)"
-                >
-                  <button
-                    type="button"
-                    class="note-card__more"
-                    :class="{ 'is-open': menuOpenId === document.id }"
-                    aria-label="更多操作"
+            <div class="note-card__body">
+              <header class="note-card__header">
+                <h2 class="note-card__title" :title="document.title">{{ document.title }}</h2>
+                <div v-if="!isMobile" class="note-card__more-wrap" @click.stop>
+                  <el-dropdown
+                    trigger="click"
+                    @command="handleDropdownCommand"
+                    @visible-change="(open) => onMenuVisibleChange(document.id, open)"
                   >
-                    <el-icon :size="16"><More /></el-icon>
-                  </button>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item :command="{ action: 'edit', document }">
-                        编辑
-                      </el-dropdown-item>
-                      <el-dropdown-item :command="{ action: 'preview', document }">
-                        查看
-                      </el-dropdown-item>
-                      <el-dropdown-item :command="{ action: 'settings', document }">
-                        设置
-                      </el-dropdown-item>
-                      <el-dropdown-item
-                        divided
-                        class="note-card__actions-delete"
-                        :command="{ action: 'delete', document }"
-                      >
-                        删除
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </header>
+                    <button
+                      type="button"
+                      class="note-card__more"
+                      :class="{ 'is-open': menuOpenId === document.id }"
+                      aria-label="更多操作"
+                    >
+                      <el-icon :size="16"><More /></el-icon>
+                    </button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item :command="{ action: 'edit', document }">
+                          编辑
+                        </el-dropdown-item>
+                        <el-dropdown-item :command="{ action: 'preview', document }">
+                          查看
+                        </el-dropdown-item>
+                        <el-dropdown-item :command="{ action: 'settings', document }">
+                          设置
+                        </el-dropdown-item>
+                        <el-dropdown-item
+                          divided
+                          class="note-card__actions-delete"
+                          :command="{ action: 'delete', document }"
+                        >
+                          删除
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </header>
 
-            <p class="note-card__desc">
-              {{ document.description || '暂无描述' }}
-            </p>
+              <p class="note-card__desc">
+                {{ document.description || '暂无描述' }}
+              </p>
 
-            <footer class="note-card__footer">
-              <span v-if="document.author" class="note-card__author">{{ document.author }}</span>
-              <span class="note-card__dot" v-if="document.author" aria-hidden="true">·</span>
-              <time class="note-card__time" :datetime="document.updated_at">
-                {{ formatRelativeTime(document.updated_at) }}
-              </time>
-            </footer>
+              <footer class="note-card__footer">
+                <span v-if="document.author" class="note-card__author">{{ document.author }}</span>
+                <span class="note-card__dot" v-if="document.author" aria-hidden="true">·</span>
+                <time class="note-card__time" :datetime="document.updated_at">
+                  {{ formatRelativeTime(document.updated_at) }}
+                </time>
+              </footer>
+            </div>
+
+            <el-icon v-if="isMobile" class="note-card__chevron" :size="16" aria-hidden="true">
+              <ArrowRight />
+            </el-icon>
           </article>
         </div>
       </main>
@@ -98,16 +114,18 @@
 import { ref, defineAsyncComponent, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { More } from '@element-plus/icons-vue'
+import { More, Document, ArrowRight } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useDocumentStore } from '@/store/documentStore'
 import type { DocumentItem } from '@/store/documentStore'
+import { useIsMobile } from '@/composables/useIsMobile'
 
 const AddFile = defineAsyncComponent(() => import('./components/AddFile.vue'))
 
 const router = useRouter()
 const addFileRef = ref()
 const store = useDocumentStore()
+const isMobile = useIsMobile()
 const { documents, documentsLoading } = storeToRefs(store)
 const menuOpenId = ref<number | string | null>(null)
 
@@ -237,6 +255,13 @@ function handleDropdownCommand(payload: DropdownPayload) {
     padding-bottom: 16px;
     border-bottom: 1px solid var(--line);
     flex-shrink: 0;
+
+    &--sticky {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg);
+    }
   }
 
   &__brand {
@@ -277,6 +302,23 @@ function handleDropdownCommand(payload: DropdownPayload) {
     min-width: 0;
   }
 
+  &__count-chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
   &__title {
     margin: 0;
     font-size: 18px;
@@ -304,6 +346,14 @@ function handleDropdownCommand(payload: DropdownPayload) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     padding: 4px 0 24px;
+
+    /* 手机端固定单列列表：用 !important 保证不被 1024/640px 的通用网格断点
+       抢回两列（641-768px 区间会同时命中 isMobile 和 1024px 断点，优先级相同时
+       source order 会让后面的断点规则赢，这里必须显式提权） */
+    &--rows {
+      grid-template-columns: 1fr !important;
+      gap: 8px;
+    }
   }
 
   &__empty {
@@ -318,6 +368,18 @@ function handleDropdownCommand(payload: DropdownPayload) {
     border-radius: var(--radius);
     background: transparent;
     padding: 64px 24px;
+  }
+
+  &__empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 8px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
   }
 
   &__empty-title {
@@ -375,6 +437,66 @@ function handleDropdownCommand(payload: DropdownPayload) {
   &:hover .note-card__more,
   &:focus-within .note-card__more {
     opacity: 1;
+  }
+
+  /* ────────── 手机端：卡片改成图标 + 文字 + 箭头的横向列表行 ────────── */
+  &--row {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    min-height: 0;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(17, 17, 17, 0.04), 0 1px 8px rgba(17, 17, 17, 0.05);
+    transition: transform 120ms ease, box-shadow var(--ease);
+
+    &:hover {
+      border-color: transparent;
+      box-shadow: 0 1px 2px rgba(17, 17, 17, 0.04), 0 1px 8px rgba(17, 17, 17, 0.05);
+    }
+
+    &:active {
+      transform: scale(0.98);
+      box-shadow: 0 1px 2px rgba(17, 17, 17, 0.04);
+    }
+
+    &:focus-visible {
+      border-color: transparent;
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .note-card__body {
+      gap: 3px;
+    }
+
+    .note-card__title {
+      -webkit-line-clamp: 1;
+      line-clamp: 1;
+    }
+
+    .note-card__desc {
+      -webkit-line-clamp: 1;
+      line-clamp: 1;
+    }
+
+    .note-card__footer {
+      margin-top: 0;
+      padding-top: 0;
+    }
+  }
+
+  &__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__chevron {
+    flex-shrink: 0;
+    color: var(--faint);
   }
 
   &__header {
@@ -504,10 +626,6 @@ function handleDropdownCommand(payload: DropdownPayload) {
       gap: 10px;
     }
   }
-
-  .note-card__more {
-    opacity: 1;
-  }
 }
 
 :deep(.note-card__actions-delete) {
@@ -524,6 +642,10 @@ function handleDropdownCommand(payload: DropdownPayload) {
   .note-card__title,
   .note-card__more {
     transition: none;
+  }
+
+  .note-card--row:active {
+    transform: none;
   }
 }
 </style>

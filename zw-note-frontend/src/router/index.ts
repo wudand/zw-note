@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { isMobileViewport } from '@/composables/useIsMobile'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -28,6 +29,13 @@ const router = createRouter({
       }
     },
   ]
+})
+
+// 手机端只做查看：即使通过分享链接 / 历史记录 / 桌面转手机深链进入编辑页，也兜底跳回预览页
+router.beforeEach((to) => {
+  if (to.name === 'document-edit' && isMobileViewport()) {
+    return { name: 'document-preview', params: to.params }
+  }
 })
 
 export default router
