@@ -364,7 +364,7 @@ onBeforeUnmount(() => {
     min-width: 0;
     font-size: 13px;
     font-weight: 500;
-    color: #6b6b6b;
+    color: #5a9e58;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
